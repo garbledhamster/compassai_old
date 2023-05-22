@@ -1,7 +1,5 @@
 # AI-Tools
 
-![AI-Tools Logo](./logo.png)
-
 AI-Tools is an application designed to provide a suite of diverse and industry-specific tools to enhance productivity and efficiency. Whether you are a dungeon master in need of assistance, a reader looking for summarized articles, or a developer seeking an AI-powered companion, AI-Tools has got you covered. This README file serves as a guide to help you understand the various features and functionalities offered by AI-Tools.
 
 ## Features
