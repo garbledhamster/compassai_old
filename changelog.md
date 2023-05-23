@@ -3,6 +3,18 @@
 ## All notable changes to this project will be documented in this file.
 
 ---
+# Changelog
+
+## [2.0.5] - 2023-05-23
+
+### Fixed
+- Fixed issue in chef.html java script ordering
+- Fixed issue in index.html with extra </body> tag
+- Fixed issue in index.html java script ordering
+
+### Changed
+- Updated json template in chef.js to be a bit more robust
+- Reordered the entire tools.js file
 
 ## [2.0.4] - 2023-05-23
 

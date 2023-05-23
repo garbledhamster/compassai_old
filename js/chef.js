@@ -6,8 +6,8 @@ document.addEventListener("DOMContentLoaded", function () {
         "AI-Goals": ["Content Creation", "Recipe Conversion"],
         "Output Formats": ["Text", "JSON"],
         "Output Format Templates": {
-            "Text": "Template1",
-            "JSON": "Template2"
+            "Text": "Template",
+            "JSON": "Template"
         },
         "Input Formats": ["Text", "JSON"],
         "AI Context": "Recipe Conversion",
@@ -21,13 +21,13 @@ document.addEventListener("DOMContentLoaded", function () {
         "Feedback Mechanism": "Star Rating",
         "Interaction History": [
             {
-                "Interaction1": {
+                "Interaction": {
                     "Query": "What's the weather?",
                     "Response": "It's sunny."
                 }
             },
             {
-                "Interaction2": {
+                "Interaction": {
                     "Query": "Set an alarm",
                     "Response": "Alarm set for 7 AM."
                 }
@@ -35,14 +35,18 @@ document.addEventListener("DOMContentLoaded", function () {
         ],
         "Memories": [
             {
-                "Memory1": "User's favorite book is 1984."
+                "Memory": {
+                    "Memory-Text": "User is very old.",
+                    "Important": "true"
+                }
             },
             {
-                "Memory2": "User prefers coffee over tea."
+                "Memory": {
+                    "Memory-Text": "User prefers coffee over tea.",
+                    "Important": "true"
+                }
             }
         ]
     };
-
-    saveAIConfig(aiConfig);
 
 });

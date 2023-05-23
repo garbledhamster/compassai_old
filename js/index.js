@@ -20,8 +20,4 @@ document.addEventListener('DOMContentLoaded', (event) => {
     toolWrapper.appendChild(iframe);
   }
 
-  // Page Initialization
-
-const myContainer = selectById("memory")
-addStickyInsetDropShadow(myContainer, 'top');
 });
