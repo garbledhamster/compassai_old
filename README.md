@@ -44,6 +44,14 @@ The Articulation AI tool focuses on improving users' communication skills, helpi
 - Guidance for better verbal communication
 - Assistance in articulating ideas with precision
 
+### Outline AI 📝
+
+The Outline AI is a powerful addition to AI-Tools, capable of transforming requests into detailed outlines. This AI tool can take any input request and generate a comprehensive outline, providing a structured overview of the requested information. It offers the following functionality:
+
+- Detailed outlining of various topics and subjects
+- Organization of ideas and concepts in a hierarchical manner
+- Customization options to tailor the outline structure according to user preferences
+
 ## Getting Started
 
 To get started with AI-Tools, follow these steps:
@@ -70,7 +78,3 @@ If you encounter any issues or have suggestions for improvement, please open an 
 ## License
 
 AI-Tools is released under the [MIT License](LICENSE.md). You are free to use, modify, and distribute this software in accordance with the terms specified in the license.
-
-## Acknowledgments
-
-We would like to express our gratitude to the open-source community for their contributions and support. Without their efforts, AI-Tools would not have been possible.
