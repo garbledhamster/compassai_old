@@ -1,0 +1,49 @@
+help me turn this brain dump into an organized trello card list, i want you to come up with names for the cards and labels i should use i've provided you with a list of labels, every card must have at least one label. This will be for tasks i've completed for my web app project.  I want the card names to be as if i didn't already complete the task.  i'm trying to backfil my done list for tracking purposes.
+
+LABELS:
+Bug 🐞: Tasks involving fixing a bug. Color: Red
+Feature 🌟: Tasks involving adding a new feature. Color: Blue
+Improvement 💡: Tasks involving enhancing an existing feature. Color: Yellow
+Documentation 📝 : Tasks related to documenting your project. Color: Purple
+High Priority ⚠️: Tasks that need to be completed as soon as possible. Color: Orange
+Low Priority 🟢: Tasks that are not urgent and can be completed later. Color: Green
+
+BRAINDUMP:
+
+My app is about using ai to complete mundane or every day tasks.
+
+This is my first ever project, i am brand new to this.
+
+I started developing it a few weeks ago.
+my first version started as powershell scripts
+then it morphed into a web ap
+the first version of the web app was very basic
+- i built out a generic interface
+ - one input box
+ - one output box
+ - a submit button
+ - an index page
+ - and a toolselector java script function to pull each tool into the index and load it in a div table
+- i built out five tools that used openai to do some sort of task
+ - articulation.html - used for taking thoughts and putting them into words
+ - code.html - used for providing developer support.
+ - outline.html - used for building outlines
+ - summarize.html - used for sumamrize text into a summary and keypoints
+ - todo.thml - uased for creating dynamic todo lists
+- i built out the essential javascript functions
+ - openai messeger
+  - using api key
+  - using chatgpt 3.5 api
+ - and the click event listner for the submit
+The second version of my app started introducing modern css elements.
+- I rebuilt the entire interface from the ground up
+- organized and restructured files
+- rebuilt all javascript functions to reduce the number of lines.
+- implemented a "memory" system to keep track of "memories" to reference for later.
+ - each memory loads into the memory container, has a toolbar to mark the memory as important or delete the memory.
+- i am currently fine tuning the interface to work on mobile
+- i incorporated a clipboard button to copy the ai output text to the clipboard.
+- converted the innerhtml of the output-container to an iframe
+
+Note: this is my first web app.
+
