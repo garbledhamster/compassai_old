@@ -393,12 +393,13 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  let aiConfig = JSON.parse(localStorage.getItem("aiConfig"));
-  if (aiConfig == null) {
+  let aiConfigFile = JSON.parse(localStorage.getItem("aiConfig"));
+  if (aiConfigFile == null) {
     console.error("AI Config not found in local storage.");
-    saveMemories(aiConfig);
+    saveAIConfig(aiConfig);
   } else {
-    loadMemories(aiConfig);
+    loadMemories(aiConfigFile);
   }
   
 });
+
