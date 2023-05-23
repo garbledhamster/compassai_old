@@ -2,32 +2,6 @@
 
 All notable changes to this project will be documented in this file using this format.
 
-## [0.x.y.z] - YYYY-MM-DD
-
-### Added
-
-- [Added feature or functionality]
-
-### Changed
-
-- [Changed feature or functionality]
-
-### Deprecated
-
-- [Deprecated feature or functionality]
-
-### Removed
-
-- [Removed feature or functionality]
-
-### Fixed
-
-- [Fixed issue or bug]
-
-### Security
-
-- [Security-related changes]
-
 ---
 
 ## [0.2.0.4] - 2023-05-23
