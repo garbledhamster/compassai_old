@@ -1,25 +1,20 @@
-## Version 2.0.0
+# Changelog
+All notable changes to this project will be documented in this file.
 
-#### Changes
-- **[Improvement]** Revamped the entire interface incorporating modern CSS elements.
-- **[Improvement]** Restructured and organized files for better navigation and maintenance.
-- **[Improvement]** Optimized all JavaScript functions to reduce line count and improve performance.
-- **[Feature]** Added a "memory" system to track "memories" or previous tasks, each memory complete with a toolbar for marking importance or deleting.
-- **[Improvement]** Fine-tuned the interface for optimal mobile compatibility.
-- **[Feature]** Added a clipboard button to copy the AI output text easily.
-- **[Improvement]** Converted the innerHTML of the output-container to an iframe to improve usability and performance.
+## [2.0.0] - 2023-05-22
+### Added
+- New memory system for tracking tasks
+- Clipboard feature for copying AI output
 
----
-## Version 1.0.0
+### Changed
+- Interface now uses modern CSS elements
+- JavaScript functions optimized for shorter lines of code
+- Interface fine-tuned for mobile compatibility
+- innerHTML of output-container converted to an iframe
 
-#### Changes
-- **[Feature]** Developed a basic web application interface including an input box, output box, submit button, and index page.
-- **[Feature]** Developed a toolselector JavaScript function to integrate each tool into the index page.
-- **[Feature]** Created five AI tools: articulation.html, code.html, outline.html, summarize.html, and todo.html, leveraging OpenAI capabilities.
-- **[Feature]** Implemented essential JavaScript functions such as the OpenAI messenger (utilizing the ChatGPT 3.5 API) and the click event listener for submit.
-
----
-## Initial Development
-
-#### Changes
-- **[Feature]** Commenced project and transitioned from PowerShell scripts to web application format.
+## [1.0.0] - 2023-04-22
+### Added
+- Basic interface with input box, output box, submit button
+- Index page and toolselector JavaScript function
+- Five AI tools using OpenAI
+- Essential JavaScript functions including OpenAI messenger
