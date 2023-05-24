@@ -4,6 +4,21 @@
 
 ---
 
+## [2.0.6] - 2023-05-24
+
+### Added
+- Created a new js file called "chatty.js" which serves as the ai profile and storage container for conversations and memories.
+- Added chatty.js to index.html and chatty.html.
+
+### Changed
+- Rebuilt all of the Memory functions. 
+- Memories now load and save to the browsers local storage.
+- Memory "Important" button is now retained and loads into the user input.
+- Memory "Delete" button 
+
+### Fixed
+- Fixed order of scripts in chatty.html.
+
 ## [2.0.5] - 2023-05-23
 
 ### Fixed
