@@ -10,15 +10,15 @@ var openaiAPI = "https://api.openai.com/v1/chat/completions";
 var maxRetries = 3;
 var memoriesToPull = 5;
 let textarea = selectById("user-input");
-let aiName = "";
-let aiPersonality = "";
-let aiGoals = "";
-let outputFormats = "";
-let outputFormatTemplates = "";
-let inputFormats = "";
-let aiContext = "";
-let aiDomainExpertise = "";
-let aiTone = "";
+let aiName;
+let aiPersonality;
+let aiGoals;
+let outputFormats;
+let outputFormatTemplates;
+let inputFormats;
+let aiContext;
+let aiDomainExpertise;
+let aiTone;
 let aiConfigFile;
 let memoriesDivContainer;
 
@@ -247,15 +247,7 @@ function loadMemories() {
 
 function  createAiProfile() {
   aiConfig = loadAIConfig();
-  aiName = aiConfig["AI-Name"];
-  aiPersonality = aiConfig["AI-Personality"];
-  aiGoals = aiConfig["AI-Goals"];
-  outputFormats = aiConfig["Output Formats"];
-  outputFormatTemplates = aiConfig["Output Format Templates"];
-  inputFormats = aiConfig["Input Formats"];
-  aiContext = aiConfig["AI Context"];
-  aiDomainExpertise = aiConfig["AI Domain Expertise"];
-  aiTone = aiConfig["AI Tone"];
+
 }
 
 // MEMORY FUNCTIONS
@@ -454,9 +446,18 @@ function addMemoryToLocalStorage(memory) {
 
 document.addEventListener("DOMContentLoaded", function () {
 
-  createAiProfile()
+  aiName = aiConfig["AI-Name"];
+  aiPersonality = aiConfig["AI-Personality"];
+  aiGoals = aiConfig["AI-Goals"];
+  outputFormats = aiConfig["Output Formats"];
+  outputFormatTemplates = aiConfig["Output Format Templates"];
+  inputFormats = aiConfig["Input Formats"];
+  aiContext = aiConfig["AI Context"];
+  aiDomainExpertise = aiConfig["AI Domain Expertise"];
+  aiTone = aiConfig["AI Tone"];
   memoriesDivContainer = selectById("memories");
   console.log("Loading " + aiName + "...");
+  aiConfigFile = "aiconfig-" + aiName;
 
   // EVENT LISTENERS
 
