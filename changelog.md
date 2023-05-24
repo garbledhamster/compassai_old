@@ -2,8 +2,6 @@
 
 ## All notable changes to this project will be documented in this file.
 
----
-
 ## [2.0.6] - 2023-05-24
 
 ### Added
