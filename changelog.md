@@ -3,7 +3,6 @@
 ## All notable changes to this project will be documented in this file.
 
 ---
-# Changelog
 
 ## [2.0.5] - 2023-05-23
 
