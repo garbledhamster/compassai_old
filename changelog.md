@@ -2,7 +2,7 @@
 
 ## All notable changes to this project will be documented in this file.
 
-## [2.2.0] - 2023-05-25 - Major Update to Tools
+## [2.1.0] - 2023-05-25 - Major Update to Tools
 
 ### Added
 
