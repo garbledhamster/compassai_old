@@ -69,7 +69,7 @@
 
 - .gitignore file
 
-## [2.0.0] - 2023-05-22
+## [2.0.0] - 2023-05-22 - Major Update to Tools 
 
 ### Changed
 
@@ -83,7 +83,7 @@
 - New memory system for tracking tasks
 - Clipboard feature for copying AI output
 
-## [1.0.0] - 2023-04-22
+## [1.0.0] - 2023-04-22 - Inital idea and creation of app
 
 ### Added
 
