@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.1.1] - 2023-05-25 - Added Chat History Control Features
+Added
+- Created clear chat history button.
+- Created toggle button for changing how many messages are sent in regards to history.
+
+### Summary:
+Added chat history control features
+
+### Description:
+In this update, we have added two new features that will provide users with greater control over their chat history. Firstly, we have created a clear chat history button which, when clicked, will completely erase the current chat history. Secondly, we've added a toggle button that allows users to control how many messages are sent in regards to history. This will allow users to have more control over their chat history and enhance the overall user experience.
+
 ## [2.1.0] - 2023-05-25 - Major Update to Tools
 
 ### Added
@@ -69,7 +80,7 @@
 
 - .gitignore file
 
-## [2.0.0] - 2023-05-22 - Major Update to Tools 
+## [2.0.0] - 2023-05-22
 
 ### Changed
 
@@ -83,7 +94,7 @@
 - New memory system for tracking tasks
 - Clipboard feature for copying AI output
 
-## [1.0.0] - 2023-04-22 - Inital idea and creation of app
+## [1.0.0] - 2023-04-22
 
 ### Added
 

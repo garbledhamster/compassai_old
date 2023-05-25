@@ -10,6 +10,7 @@ var openaiAPI = "https://api.openai.com/v1/chat/completions";
 var maxRetries = 3;
 var memoriesToPull = 5;
 let textarea = selectById("user-input");
+let chatHistoryToggle = "infinite";
 let aiName;
 let aiPersonality;
 let aiGoals;
@@ -115,7 +116,7 @@ function getMemoryContent() {
 
 // STRING OPERATIONS
 
-function buildMessage(userInput, loadHistory) {
+function buildMessage(userInput) {
   try {
     console.log("Building message to send to AI...");
 
@@ -129,35 +130,57 @@ function buildMessage(userInput, loadHistory) {
 
     let message = `${memoryContent}\n\n${userInput}`.trim();
 
-    if (loadHistory === true) {
-      let toolOutputInner = document.getElementById("tool-output-inner");
-
+    if (chatHistoryToggle === "infinite") {
+      console.log(" - Chat history is toggled, sending chat history");
+      const toolOutputInner = document.getElementById("tool-output-inner");
+    
       if (!toolOutputInner) {
         console.log(" - BUILT MESSAGE 1: " + message);
         return message;
       }
-
+    
       let combinedMessages = Array.from(toolOutputInner.children)
         .map((messageElement) => {
           let lines = messageElement.innerText.trim().split("\n");
           if (lines.length > 1) {
             let lastLine = lines.pop();
-            return lastLine + ": '" + lines.join("\n") + "'";
+            let prefix = messageElement.classList.contains("user-message") ? "USER:" : "AI:";
+            return prefix + " '" + lines.join("\n") + "': " + lastLine;
           } else {
-            return lines[0];
+            let prefix = messageElement.classList.contains("user-message") ? "USER:" : "AI:";
+            return prefix + " " + lines[0];
           }
         })
         .join("\n");
-        
-      
+    
       return combinedMessages + "\n" + message;
+    }
+    
+    if (chatHistoryToggle === "aiLastOutput") {
+      console.log(" - Chat history is toggled, sending last AI message");
+      const toolOutputInner = document.getElementById("tool-output-inner");
+    
+      if (!toolOutputInner) {
+        console.log(" - BUILT MESSAGE 1: " + message);
+        return message;
+      }
+    
+      let lastAiMessage = '';
+      const messageElements = Array.from(toolOutputInner.getElementsByClassName("ai-message"));
+      if (messageElements.length > 0) {
+        const lastMessageElement = messageElements[messageElements.length - 1];
+        lastAiMessage = "AI: " + lastMessageElement.innerText.trim();
+      }
+    
+      return lastAiMessage + "\n" + message;
     }
     
     return message;
   } catch (error) {
     console.error('Error building message:', error);
   }
-};
+}
+
 
 function trimMessage(message, maxTokens) {
   if (typeof message !== "string" || typeof maxTokens !== "number") {
@@ -299,7 +322,6 @@ function createMemory(text, important, tokenLength, timestamp) {
   );
   return memoryContainer;
 }
-
 
 function createNewMemoryContainer(metadata) {
   console.log(
@@ -570,8 +592,90 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  console.log(" - Checking for " + aiName + "'s configuration file...");
+  selectById("clearButton").addEventListener("click", (e) => {
+    const overlay = document.createElement("div");
+    overlay.style.position = "fixed";
+    overlay.style.top = "0";
+    overlay.style.left = "0";
+    overlay.style.width = "100%";
+    overlay.style.height = "100%";
+    overlay.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+    overlay.style.display = "flex";
+    overlay.style.justifyContent = "center";
+    overlay.style.alignItems = "center";
+    overlay.style.zIndex = "9999";
+  
+    // Create prompt box
+    const promptBox = document.createElement("div");
+    promptBox.style.backgroundColor = "white";
+    promptBox.style.padding = "20px";
+    promptBox.style.borderRadius = "5px";
+    promptBox.style.textAlign = "center";
+    overlay.appendChild(promptBox);
+  
+    // Create prompt text
+    const promptText = document.createElement("p");
+    promptText.textContent = "Clear chat history?";
+    promptBox.appendChild(promptText);
+  
+    // Create yes button
+    const yesButton = document.createElement("button");
+    yesButton.textContent = "Yes";
+    yesButton.style.marginRight = "10px";
+    yesButton.className="button";
+    promptBox.appendChild(yesButton);
+  
+    // Create no button
+    const noButton = document.createElement("button");
+    noButton.textContent = "No";
+    noButton.className="button";
+    promptBox.appendChild(noButton);
+  
+    // Append the overlay to the document body
+    document.body.appendChild(overlay);
+  
+    // Add event listeners to the buttons
+    yesButton.addEventListener("click", () => {
+      // Clear all child items
+      let outputTextInner = selectById("tool-output-inner");
+      while (outputTextInner.firstChild) {
+        outputTextInner.removeChild(outputTextInner.firstChild);
+      }
+      // Remove the overlay
+      document.body.removeChild(overlay);
+    });
+  
+    noButton.addEventListener("click", () => {
+      // Remove the overlay
+      document.body.removeChild(overlay);
+    });
+  });
+  
+  selectById("chatHistoryToggle").addEventListener("click", (e) => {
+    console.log("CHAT HISTORY TOGGLE PRESSED");
+    const toggleButton = selectById("chatHistoryToggle");
+  
+    if (chatHistoryToggle === "infinite") {
+      chatHistoryToggle = "aiLastOutput";
+      toggleButton.textContent = "📚";
+    } else if (chatHistoryToggle === "aiLastOutput") {
+      chatHistoryToggle = "currentInput";
+      toggleButton.textContent = "📗";
+    } else if (chatHistoryToggle === "currentInput") {
+      chatHistoryToggle = "infinite";
+      toggleButton.textContent = "♾️";
+    } else {
+      // Handle the case when the starting value is not accounted for
+      chatHistoryToggle = "infinite";
+      toggleButton.textContent = "♾️";
+    }
+  
+    console.log(" - Chat history toggle is now set to " + chatHistoryToggle);
+  });
+  
 
+
+  console.log(" - Checking for " + aiName + "'s configuration file...");
   if (!checkAiConfigFileExists()) {
     saveAIConfig();
   } else {
@@ -579,6 +683,5 @@ document.addEventListener("DOMContentLoaded", function () {
     const aiConfigObject = JSON.parse(configString);
     aiConfig = aiConfigObject;
   }
-
   loadMemories();
 });
