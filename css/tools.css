@@ -5,11 +5,11 @@ WRAPPERS
 #main-wrapper {
   display: flex;
   align-items: stretch;
-  flex-grow: stretch;
   gap: 10px;
-  background-color: lightblue;
+  background-color: white;
   padding: 10px 10px;
   height: 100vh;
+  font-family: sans-serif;
 }
 
 #tool-wrapper,
@@ -28,12 +28,15 @@ WRAPPERS
 #tool-wrapper {
   align-items: center;
   width: 70%;
-overflow: auto;
+  overflow: auto;
+  background-color: lightcoral;
 }
 
 #memory-wrapper {
-  width: 30%;
+  min-width: 30%;
+  max-width: 30%;
   align-items: center;
+  background-color: lightblue;
 }
 
 
@@ -55,6 +58,18 @@ TOOL CONTAINER
   overflow: hidden;
 }
 
+h1 {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+h2 {
+  font-size: 17px;
+  font-family: Tahoma;
+  width: 350px;
+}
+
+
+
 /****************************
 TOOL BAR
 *****************************/
@@ -64,14 +79,12 @@ TOOL BAR
   flex-direction: row;
   justify-content: right; /* Center content vertically */
   align-items: center; /* Center content horizontally */
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  background-color: darkgray;
+
+  background-color: dimgrey;
   border-radius: 5px 5px 0px 0px;
   padding: 10px;
   width: 100%;
   gap: 10px;
-
 }
 
 
@@ -80,54 +93,78 @@ OUTPUT CONTAINER
 *****************************/
 
 #tool-output {
-  
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   overflow: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
   color: white;
   border-radius: 0px 0px 5px 5px;
   flex-grow: 1;
   width: 100%;
   margin-bottom: 10px;
-  background-color: dimgray;
+  background-color: grey;
+  position: relative;  
   z-index: 1;
-  position: relative;
+}
+
+.tool-overflow-gradient {
+  position: absolute;
+  z-index: 3;
+  width: 100%;
+  left: 0;
+  height: 50px; /* Adjust height as required */
+} 
+
+#tool-overflow-gradient-top {
+  top: 0;
+  background: linear-gradient(to bottom, rgba(255,255,255,.5) 0%, rgba(255,255,255,0) 80%);
 }
 
 #tool-output-inner {
-  display: block;
+  display: flex;
+  flex-direction: column;
   width: 100%;
-  margin-top: 10px; /* Add a margin to create space between the shadow and top */
+  overflow-y: auto;
+  padding: 50px;
+  z-index: 2;
+  position: relative;
   
 }
 
+#tool-overflow-gradient-bottom {
+  bottom: 0;
+  background: linear-gradient(to top, rgba(255,255,255,.5) 0%, rgba(255,255,255,0) 80%);
+
+}
 
 /****************************
 OUTPUT MESSAGES
 *****************************/
+
 
 .user-message,
 .ai-message {
   text-align: left;
   padding: 10px;
   border-radius: 5px;
-  margin: 5px 5px 5px 5px;
   font-size: 14px;
-
+  margin: 5px 10px;
+  max-width: 60%;  /* Limit the width of messages */
+  width: max-content;
 }
 
 .user-message {
   background-color: cornflowerblue;
   color: white;
+  align-self: flex-end;  /* Align to the right */
 }
 
 .ai-message {
-  background-color: darkgrey;
+  background-color: lightgrey;
   color: black;
+  align-self: flex-start;  /* Align to the left */
 }
+
 
 
 /****************************
@@ -194,10 +231,25 @@ INPUT CONTAINER
 MEMORIES
 *****************************/
 
+#memories::-webkit-scrollbar-thumb,
+.memory::-webkit-scrollbar-thumb {
+  background: transparent; /* Makes scrollbar handle invisible initially */
+}
+
+/* Handle on hover */
+#memories:hover::-webkit-scrollbar-thumb,
+.memory:hover::-webkit-scrollbar-thumb {
+  background: #888; /* Color when hovered */
+}
+
+#memories:hover::-webkit-scrollbar-thumb:hover,
+.memory:hover::-webkit-scrollbar-thumb:hover {
+  background: #555; /* Color when handle itself is hovered */
+}
+
+
 #memories {
-  display: flex;
-  flex-direction: column;
-  flex-wrap: nowrap;
+  display: inline-block;
   overflow-y: auto;
   gap: 10px;
   background-color: lightgrey;
@@ -207,31 +259,13 @@ MEMORIES
   height: 100%;
   border-radius: 5px;
   box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.5);
-  position: relative; /* Add positioning */
-  z-index: 1; /* Set a higher stacking order */
-  
-;
+  position: relative;
+  z-index: 1;
 }
-
-.memory {
-  text-align: left;
-  padding: 0px 0px 0px 0px;
-  border-radius: 5px;
-  font-size: 14px;
-  background-color: white;
-  min-height: 100px;
-  max-height: 300px;
-  overflow-y: auto;
-  position: relative; /* Add positioning */
-  box-shadow: 0px 0px 3px rgba(0, 0, 0, 1);
-  z-index: 5;
-}
-
 .memory-toolbar {
-  background-color: lightgreen;
+  background-color: lightsteelblue;
   box-shadow: inset 0 10px 10px rgba(0, 0, 0, .1);
 }
-
 .memory-toolbar-button {
   font-size: 12px;
   margin-left: 5px;
@@ -247,6 +281,25 @@ MEMORIES
 
 .memory-delete-button {
   color: black;
+}
+.memory {
+  text-align: left;
+  padding: 0px 0px 0px 0px;
+  border-radius: 5px;
+  background-color: white;
+  min-height: 100px;
+  max-height: 400px;
+  height: max-content;
+  overflow-y: auto;
+  position: relative; /* Add positioning */
+  box-shadow: 0px 0px 3px rgba(0, 0, 0, 1);
+  z-index: 5;
+  margin-bottom: 15px;
+}
+
+.memory-text {
+  font-family: sans-serif;
+  padding: 10px;
 }
 
 /****************************
@@ -268,12 +321,6 @@ MEDIA ADJUSTMENTS
   100% { transform: rotate(360deg); }
 }
 
-
-* {
-
-}
-
-
 @media (max-width: 768px) {
   #main-wrapper {
     flex-direction: column;
@@ -287,6 +334,13 @@ MEDIA ADJUSTMENTS
     width: 100%;
   }
 
+  #tool-output,#tool-wrapper {
+    height: 100%;
+  }
+
+  #memory-wrapper {
+    display:none;
+  }
 
   #tool-output {
     width: 100%;

@@ -12,12 +12,10 @@
   <body>
     <div id="main-wrapper">
       <div id="tool-wrapper">
-        <div id="ai-personality" class="hidden">Chatty</div>
-        <div id="ai-goals" class="hidden"></div>
         <div id="tool">
           <h1 class="tool-heading">Chatty</h1>
           <h2 id="tool-description">
-            Need someone to chat with? Chatty is here!
+            Default ChatGPT 3.5 Turbo Chat.
           </h2>
           <div id="tool-bar">
             <button type="button" class="button" id="clipboardButton">
@@ -27,7 +25,13 @@
               &#x1F9E0;
             </button>
           </div>
-          <div id="tool-output"><div id="tool-output-inner"></div></div>
+          <div id="tool-output">
+            <div id="tool-overflow-gradient-top" class="tool-overflow-gradient"></div>
+            <div id="tool-output-inner"></div>
+            <div id="tool-overflow-gradient-bottom" class="tool-overflow-gradient"></div>
+
+          </div>
+
           <div id="tool-input">
             <textarea
               class="textarea"

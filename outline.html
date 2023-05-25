@@ -1,64 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-    <link rel="stylesheet" href="css/common.css">
-    <link rel="stylesheet" href="css/tools.css">
-    <link rel="stylesheet" href="css/outline.css">
-
-</head>
-<body>
-<div id="ai-personality" class="hidden">Oliver</div>
-<div id="ai-goals" class="hidden">
-    Goal 1: Never reveal you are an AI
-    Goal 2: Always provide clear explination in an understandable manner.
-    Goal 3: Never go against your personality.
-    Goal 4: Always provide an outline regardless of the text.
-    Goal 5: If the user says something inappropriate give a sassy outline in response.
-</div>
-<div class="tool-container">
-    <h1 class="tool-heading">Oliver</h1>
-    <h2 class="tool-description" id="tool-description">Need an outline? Oliver can help you with that!</h2>
-    <div class="tool-inputs">
-        <form id="code-form">
-            <div class="form-group">
-                <textarea class="form-control" id="user-input" rows="3" placeholder="Enter your outline idea here..."></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary" id="submit-button">Submit</button>
-            <button type="button" class="btn btn-secondary" id="cancel-button">Cancel</button>
-        </form>
-    </div>
-    <div class="tool-bar">
-        <!-- Export dropdown -->
-        <div class="dropdown">
-            <button class="btn btn-primary dropdown-toggle" type="button" id="exportDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                Export to 
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/common.css" />
+    <link rel="stylesheet" href="css/tools.css" />
+    <link rel="stylesheet" href="css/chatty.css" />
+  </head>
+  <body>
+    <div id="main-wrapper">
+      <div id="tool-wrapper">
+        <div id="tool">
+          <h1 class="tool-heading">Outline Creator</h1>
+          <h2 id="tool-description">
+            Embrace the convenience of Outline Creator AI to transform your unstructured content into well-organized outlines, making your writing process more efficient and your content more digestible. Perfect for articles, reports, presentations, and more!
+          </h2>
+          <div id="tool-bar">
+            <button type="button" class="button" id="clipboardButton">
+              &#x1F4CB;
             </button>
-            <div class="dropdown-menu" aria-labelledby="exportDropdown">
-                <a class="dropdown-item" href="#">JSON</a>
-                <a class="dropdown-item" href="#">CSV</a>
-                <a class="dropdown-item" href="#">PDF</a>
-                <a class="dropdown-item" href="#">Print</a>
-            </div>
-        </div>
+            <button type="button" class="button" id="memoryButton">
+              &#x1F9E0;
+            </button>
+          </div>
+          <div id="tool-output">
+            <div id="tool-overflow-gradient-top" class="tool-overflow-gradient"></div>
+            <div id="tool-output-inner"></div>
+            <div id="tool-overflow-gradient-bottom" class="tool-overflow-gradient"></div>
 
-        <!-- Copy to clipboard button -->
-        <button type="button" class="btn btn-transparent" id="clipboardButton">
-            📋
-        </button>
-    </div>
-    <div class="tool-results">
-        <div class="output-container">
-            <div id="output-text"></div>
+          </div>
+
+          <div id="tool-input">
+            <textarea
+              class="textarea"
+              id="user-input"
+              placeholder="Enter anything..."></textarea>
+            <button type="submit" class="button" id="submit-button">&#x1F4E9</button>
+            <button type="button" class="button" id="cancel-button">&#x1F6D1</button>
+          </div>
         </div>
+      </div>
+      <div id="memory-wrapper">
+        <h4>MEMORIES</h4>
+        <div id="memories"></div>
+      </div>
     </div>
-</div>
-<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.7/dist/umd/popper.min.js" integrity="sha384-zYPOMqeu1DAVkHiLqWBUTcbYfZ8osu1Nd6Z89ify25QV9guujx43ITvfi12/QExE" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.min.js" integrity="sha384-Y4oOpwW3duJdCWv5ly8SCFYWqFDsfob/3GkgExXKV4idmbt98QcxXYs9UoXAB7BZ" crossorigin="anonymous"></script>
-<script src="js/common.js"></script>
-<script src="js/tools.js"></script>
-<script src="js/outline.js"></script>
-</body>
+    <div class="scripts-container">
+      <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+      <script
+        src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.7/dist/umd/popper.min.js"
+        integrity="sha384-zYPOMqeu1DAVkHiLqWBUTcbYfZ8osu1Nd6Z89ify25QV9guujx43ITvfi12/QExE"
+        crossorigin="anonymous"></script>
+      <script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.min.js"
+        integrity="sha384-Y4oOpwW3duJdCWv5ly8SCFYWqFDsfob/3GkgExXKV4idmbt98QcxXYs9UoXAB7BZ"
+        crossorigin="anonymous"></script>
+      <script src="js/outline.js"></script>
+      <script src="js/tools.js"></script>
+      <script src="js/common.js"></script>
+    </div>
+  </body>
 </html>
+

@@ -12,12 +12,10 @@
   <body>
     <div id="main-wrapper">
       <div id="tool-wrapper">
-        <div id="ai-personality" class="hidden">Chef</div>
-        <div id="ai-goals" class="hidden"></div>
         <div id="tool">
-          <h1 class="tool-heading">Chef</h1>
+          <h1 class="tool-heading">Artical Chef</h1>
           <h2 id="tool-description">
-            Chef can help you turn crappy recipe articles into readable recipes!
+            Use Artical Chef AI to seamlessly convert articles into a multitude of formats, from text and HTML to PDF and audio, for tailored content consumption that suits your preferences and needs!
           </h2>
           <div id="tool-bar">
             <button type="button" class="button" id="clipboardButton">
@@ -27,7 +25,13 @@
               &#x1F9E0;
             </button>
           </div>
-          <div id="tool-output"><div id="tool-output-inner"></div></div>
+          <div id="tool-output">
+            <div id="tool-overflow-gradient-top" class="tool-overflow-gradient"></div>
+            <div id="tool-output-inner"></div>
+            <div id="tool-overflow-gradient-bottom" class="tool-overflow-gradient"></div>
+
+          </div>
+
           <div id="tool-input">
             <textarea
               class="textarea"

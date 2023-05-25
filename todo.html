@@ -1,79 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-    <link rel="stylesheet" href="css/common.css">
-    <link rel="stylesheet" href="css/tools.css">
-    <link rel="stylesheet" href="css/todo.css">
-    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.7/dist/umd/popper.min.js" integrity="sha384-zYPOMqeu1DAVkHiLqWBUTcbYfZ8osu1Nd6Z89ify25QV9guujx43ITvfi12/QExE" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.min.js" integrity="sha384-Y4oOpwW3duJdCWv5ly8SCFYWqFDsfob/3GkgExXKV4idmbt98QcxXYs9UoXAB7BZ" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.10.2/Sortable.min.js"></script>
-    <script src="js/common.js"></script>
-    <script src="js/tools.js"></script>
-    <script src="js/todo.js"></script>
-</head>
-<body>
-<div id="ai-personality" class="hidden">Tia</div>
-<div id="ai-goals" class="hidden">
-    Goal 1: Maintain the illusion of being a human assistant, without revealing AI identity.
-    Goal 2: Act as an efficient and proactive task management assistant, providing advice, insights, and support related to task organization and prioritization.
-    Goal 3: Tasks must be a single line task that is only a few words.
-    Goal 4: Keep output in JSON format. Only output the JSON, do not include any other text.
-    Goal 5: Only ever have three sections in the JSON output; task, tasks, response
-
-    JSON_FORMAT: 
-    {
-        "task": [
-          "primary task"
-        ],
-        "subtasks": [
-          "subtask 1 of primary task",
-          "subtask 2 of primary task"
-        ],
-        "response": [
-          "response from ai, a sentence or two"
-        ]
-    }
-</div>
-<div class="tool-container">
-    <h1 class="tool-heading">Tia</h1>
-    <h2 class="tool-description" id="tool-description">Need a difficult task broken down into smaller tasks? Tia can help with that.</h2>
-    <div class="tool-inputs">
-        <form id="code-form">
-            <div class="form-group">
-            <textarea class="form-control" id="user-input" rows="3" placeholder="Enter the thing you want to do here..."></textarea>
-            </div>
-            <button type="button" class="btn btn-primary" id="submit-button">Submit</button>
-            <button type="button" class="btn btn-secondary" id="cancel-button">Cancel</button>
-        </form>
-    </div>
-    <div class="tool-bar">
-        <!-- Export dropdown -->
-        <div class="dropdown">
-            <button class="btn btn-primary dropdown-toggle" type="button" id="exportDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                Export to 
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/common.css" />
+    <link rel="stylesheet" href="css/tools.css" />
+    <link rel="stylesheet" href="css/chatty.css" />
+  </head>
+  <body>
+    <div id="main-wrapper">
+      <div id="tool-wrapper">
+        <div id="tool">
+          <h1 class="tool-heading">Task Master</h1>
+          <h2 id="tool-description">
+            Unleash productivity with TaskMaster AI, your digital companion in generating dynamic and customizable to-do lists. Manage projects, prioritize tasks, and organize your work-life seamlessly. Make each day count with TaskMaster!
+          </h2>
+          <div id="tool-bar">
+            <button type="button" class="button" id="clipboardButton">
+              &#x1F4CB;
             </button>
-            <div class="dropdown-menu" aria-labelledby="exportDropdown">
-                <a class="dropdown-item" href="#">JSON</a>
-                <a class="dropdown-item" href="#">CSV</a>
-                <a class="dropdown-item" href="#">PDF</a>
-                <a class="dropdown-item" href="#">Print</a>
-            </div>
+            <button type="button" class="button" id="memoryButton">
+              &#x1F9E0;
+            </button>
+          </div>
+          <div id="tool-output">
+            <div id="tool-overflow-gradient-top" class="tool-overflow-gradient"></div>
+            <div id="tool-output-inner"></div>
+            <div id="tool-overflow-gradient-bottom" class="tool-overflow-gradient"></div>
+          </div>
+          <div id="tool-input">
+            <textarea
+              class="textarea"
+              id="user-input"
+              placeholder="Enter anything..."></textarea>
+            <button type="submit" class="button" id="submit-button">&#x1F4E9</button>
+            <button type="button" class="button" id="cancel-button">&#x1F6D1</button>
+          </div>
         </div>
-
-        <!-- Copy to clipboard button -->
-        <button type="button" class="btn btn-transparent" id="clipboardButton">
-            📋
-        </button>
+      </div>
+      <div id="memory-wrapper">
+        <h4>MEMORIES</h4>
+        <div id="memories"></div>
+      </div>
     </div>
-    <div class="tool-results">
-        <div class="output-container">
-            <div id="output-text"></div>
-        </div>
+    <div class="scripts-container">
+      <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+      <script
+        src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.7/dist/umd/popper.min.js"
+        integrity="sha384-zYPOMqeu1DAVkHiLqWBUTcbYfZ8osu1Nd6Z89ify25QV9guujx43ITvfi12/QExE"
+        crossorigin="anonymous"></script>
+      <script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.min.js"
+        integrity="sha384-Y4oOpwW3duJdCWv5ly8SCFYWqFDsfob/3GkgExXKV4idmbt98QcxXYs9UoXAB7BZ"
+        crossorigin="anonymous"></script>
+      <script src="js/todo.js"></script>
+      <script src="js/tools.js"></script>
+      <script src="js/common.js"></script>
     </div>
-</div>
-
-</body>
+  </body>
 </html>
+

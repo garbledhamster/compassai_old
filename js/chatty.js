@@ -1,4 +1,3 @@
-console.log("chatty.js has been loaded!");
 let aiConfig = {
     "AI-Name": "Chatty",
     "AI-Personality": "Friendly",
