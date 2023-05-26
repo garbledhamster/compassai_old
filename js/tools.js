@@ -168,7 +168,7 @@ function buildMessage(userInput) {
       let lastAiMessage = '';
       const messageElements = Array.from(toolOutputInner.getElementsByClassName("ai-message"));
       if (messageElements.length > 0) {
-        const lastMessageElement = messageElements[messageElements.length - 1];
+        const lastMessageElement = messageElements[messageElements.length - 2];
         lastAiMessage = "AI: " + lastMessageElement.innerText.trim();
       }
     
@@ -180,7 +180,6 @@ function buildMessage(userInput) {
     console.error('Error building message:', error);
   }
 }
-
 
 function trimMessage(message, maxTokens) {
   if (typeof message !== "string" || typeof maxTokens !== "number") {
@@ -357,8 +356,17 @@ function createMemoryToolbar(memoryJSON) {
   let important = memoryJSON["Important"];
   const memoryToolbar = document.createElement("div");
   memoryToolbar.style.display = "flex";
-  memoryToolbar.style.justifyContent = "flex-end";
+  memoryToolbar.style.justifyContent = "space-between"; // Update to space-between for left-aligned title
   memoryToolbar.className = "memory-toolbar";
+  
+  // Create and add the title element
+  const titleElement = document.createElement("div");
+  titleElement.id = "memoryToolbarTitle"
+  titleElement.textContent = "Memory Title";
+  titleElement.style.textAlign = "left";
+  titleElement.style.margin = "10px";
+  memoryToolbar.appendChild(titleElement);
+  
   memoryToolbar.appendChild(createImportantButton(important));
   memoryToolbar.appendChild(createDeleteButton());
   return memoryToolbar;
