@@ -1,5 +1,13 @@
 ## Changelog
 
+## [2.1.3] - 2023-05-26 - Fixed sendMessageToOpenAi and UI Improvements
+
+### Changed
+
+- Now returns JSON Object instead of just the content string.
+- Added console logging to monitor the send message process.
+- Updated ui elements in tools.css.
+
 ## [2.1.2] - 2023-05-26 - UI Enhancements and Bug Fixes
 
 ### Added

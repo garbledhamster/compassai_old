@@ -39,8 +39,7 @@ function appendChatBubble(parent, text, userType) {
   chatBubbleText.className = "chat-bubble user-message";
 
   // Use the parse method directly from marked
-  let markdownText = marked.parse(`${text}
-  ${currentDate}`);
+  let markdownText = marked.parse(text) + currentDate;
 
   chatBubbleText.innerHTML = markdownText;
 
@@ -55,8 +54,13 @@ function appendChatBubble(parent, text, userType) {
   parent.scrollTop = parent.scrollHeight;
 }
 
-async function sendMessageToOpenAI(message) {
+async function sendMessageToOpenAI(message, maxTokens) {
+  console.log("Sending message to OpenAI - Start");
+
   if (countTokens(message) >= maxTokens) {
+    console.log(
+      " - Max token limit exceeded, reduce your input text and try again..."
+    );
     return "Max token limit exceeded, reduce your input text and try again...";
   }
 
@@ -76,12 +80,16 @@ async function sendMessageToOpenAI(message) {
   for (let retryCount = 0; retryCount < maxRetries; retryCount++) {
     try {
       const response = await fetch(openaiAPI, requestParams);
-      //return "Hi there";
+      const responseData = await response.json();
+      console.log(" - API response received:");
+      console.log(JSON.stringify(responseData, null, 4));
+      return responseData;
     } catch (error) {
       console.error(error);
     }
   }
 
+  console.log(" - Exceeded maximum number of retries.");
   return "Exceeded maximum number of retries.";
 }
 
@@ -148,7 +156,7 @@ function buildMessage(userInput) {
       }
 
       let combinedMessages = Array.from(toolOutputInner.children)
-        .map(messageElement => {
+        .map((messageElement) => {
           let lines = messageElement.innerText.trim().split("\n");
           if (lines.length > 1) {
             let lastLine = lines.pop();
@@ -206,7 +214,7 @@ function trimMessage(message, maxTokens) {
 
   return message
     .split(" ")
-    .filter(token => {
+    .filter((token) => {
       if (tokenCount + Math.ceil(token.length / 4) <= maxTokens) {
         tokenCount += Math.ceil(token.length / 4);
         return true;
@@ -423,7 +431,7 @@ function createImportantButton(important) {
     }
 
     const memoryIndex = aiConfig["Memories"].findIndex(
-      memory =>
+      (memory) =>
         memory["Memory"]["Memory-Text"].trim() ===
         memoryWrapper.metadata["Memory"]["Memory-Text"].trim()
     );
@@ -447,7 +455,7 @@ function createDeleteButton() {
     const memoryWrapper = deleteButton.parentNode.parentNode;
     console.log("Deleting memory " + JSON.stringify(memoryWrapper.metadata));
     const memoryIndex = aiConfig["Memories"].findIndex(
-      memory =>
+      (memory) =>
         JSON.stringify(memory) === JSON.stringify(memoryWrapper.metadata)
     );
     if (memoryIndex > -1) {
@@ -515,7 +523,7 @@ function addMemoryToLocalStorage(memory) {
     if (isDuplicate) {
       // Memory already exists, update it
       const existingMemoryIndex = aiConfig["Memories"].findIndex(
-        memory => memory["Memory"]["Memory-Text"] === text
+        (memory) => memory["Memory"]["Memory-Text"] === text
       );
       aiConfig["Memories"][existingMemoryIndex]["Memory"]["Important"] =
         String(important);
@@ -552,45 +560,32 @@ document.addEventListener("DOMContentLoaded", function () {
   // EVENT LISTENERS
 
   console.log(" - Setting " + aiName + "'s buttons...");
-  selectById("submit-button").addEventListener("click", async event => {
+  selectById("submit-button").addEventListener("click", async (event) => {
     const [submitButton, userInput, toolOutputInner] = [
       "submit-button",
       "user-input",
       "tool-output-inner",
     ].map(selectById);
-    console.log("USER INPUT 0: " + userInput.value);
-
     let userInputText = userInput.value;
-    console.log("USER INPUT 1: " + userInputText);
-
     submitButton.disabled = true;
     userInput.disabled = true;
     event.preventDefault();
-
     const submitButtonText = submitButton.innerHTML;
     submitButton.innerHTML = '<div class="loading-circle"></div>';
-
-    // append the user's message
     appendChatBubble(toolOutputInner, userInputText, "user");
-
     const message = buildMessage(userInputText, true);
-    console.log("USER INPUT 2: " + message);
-
-    const response = await sendMessageToOpenAI(trimMessage(message, maxTokens));
+    const response = await sendMessageToOpenAI(message, maxTokens);
+    const responseText = response.choices[0].message.content;
+    appendChatBubble(toolOutputInner, responseText, "ai");
+    userInput.value = "";
     submitButton.innerHTML = submitButtonText;
-    // append the AI's response
-    console.log("RESPONSE: " + response);
-    appendChatBubble(toolOutputInner, response.trim(), "ai");
-
-    userInput.value = ""; // Clear the user input
-
     submitButton.disabled = false;
     userInput.disabled = false;
   });
 
   selectById("clipboardButton").addEventListener("click", () => {
     const copiedText = [...selectById("tool-output").children]
-      .map(child => child.textContent)
+      .map((child) => child.textContent)
       .join("\n");
     if (copiedText.trim() !== "") {
       navigator.clipboard.writeText(copiedText);
@@ -598,7 +593,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  selectById("memoryButton").addEventListener("click", e => {
+  selectById("memoryButton").addEventListener("click", (e) => {
     console.log("Creating memory...");
     memoriesDivContainer = selectById("memories");
     e.preventDefault();
@@ -614,7 +609,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  selectById("clearButton").addEventListener("click", e => {
+  selectById("clearButton").addEventListener("click", (e) => {
     const overlay = document.createElement("div");
     overlay.style.position = "fixed";
     overlay.style.top = "0";
@@ -673,7 +668,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  selectById("chatHistoryToggle").addEventListener("click", e => {
+  selectById("chatHistoryToggle").addEventListener("click", (e) => {
     console.log("CHAT HISTORY TOGGLE PRESSED");
     const toggleButton = selectById("chatHistoryToggle");
 
