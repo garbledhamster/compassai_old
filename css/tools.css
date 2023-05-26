@@ -14,11 +14,19 @@ pre {
 #main-wrapper {
   display: flex;
   align-items: stretch;
+  flex-direction: column;
   gap: 10px;
   background-color: white;
-  padding: 10px 10px;
-  height: 100vh;
+  padding: 10px;
   font-family: Tahoma, Verdana, sans-serif;
+  height: 100vh;
+  box-sizing: border-box;
+
+}
+
+.memoryMenu {
+  align-items: center;
+  text-align: center;
 }
 
 #tool-wrapper,
@@ -27,25 +35,68 @@ pre {
   text-align: center;
   display: flex;
   flex-direction: column;
-  flex-grow: stretch;
-  padding: 5px;
   border-radius: 5px;
   box-shadow: 0px 0px 5px 2px rgba(0, 0, 0, 0.5);
+  width: 100%;
+  box-sizing: border-box;
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+#memory-wrapper {
+  background-color: lightblue;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: lightblue;
+  height: 100%;
 }
 
 #tool-wrapper {
   align-items: center;
-  width: 70%;
   overflow: auto;
   background-color: lightcoral;
 }
 
-#memory-wrapper {
-  min-width: 30%;
-  max-width: 30%;
-  align-items: center;
-  background-color: lightblue;
+.popout-menu {
+  text-align: left;
+  display: none;
+  position: absolute;
+  background-color: #f1f1f1;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 10;
 }
+
+.popout-menu a, .popout-menu div, .popout-menu .menu-item {
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+  cursor: pointer; /* Changes cursor to hand (pointer) */
+}
+
+.popout-menu a:hover, .popout-menu div:hover, .popout-menu .menu-item:hover {
+  color: black;
+  background-color: #ddd;
+  text-decoration: underline; /* Underlines text when hovered */
+}
+
+
+.popout-menu ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.submenu-list {
+  list-style: none;
+  padding-left: 20px;
+}
+
+.submenu {
+  padding-left: 20px !important;
+}
+
 
 /****************************
 TOOL CONTAINER
@@ -69,18 +120,44 @@ TOOL CONTAINER
 TOOL BAR
 *****************************/
 
+#toolbarContainer {
+  width: 100%;
+}
+
 #tool-bar {
   display: flex;
   flex-direction: row;
-  justify-content: right; /* Center content vertically */
-  align-items: center; /* Center content horizontally */
-
   background-color: dimgrey;
-  border-radius: 5px 5px 0px 0px;
+  border-radius: 3px;
   padding: 10px;
   width: 100%;
   gap: 10px;
+  box-shadow: 0px 0px 5px black;
+  overflow-x: auto;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
 }
+
+.hamburger-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.hamburger-bar {
+  width: 25px;
+  height: 3px;
+  background-color: #000; /* Adjust color as needed */
+  margin: 3px 0;
+}
+
+
 
 /****************************
 OUTPUT CONTAINER
@@ -92,13 +169,15 @@ OUTPUT CONTAINER
   justify-content: flex-end;
   overflow: auto;
   color: white;
-  border-radius: 0px 0px 5px 5px;
+  border-radius: 3px;
   flex-grow: 1;
   width: 100%;
   margin-bottom: 10px;
   background-color: grey;
   position: relative;
   z-index: 1;
+  border-radius: 3px;
+  box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.5); /* New property: Add a drop-shadow */
 }
 
 #tool-overflow-gradient-top {
@@ -137,7 +216,7 @@ OUTPUT MESSAGES
 .ai-message {
   text-align: left;
   padding: 10px;
-  border-radius: 5px;
+  border-radius: 3px;
   font-size: 14px;
   margin: 5px 10px;
   max-width: 60%; /* Limit the width of messages */
@@ -170,14 +249,14 @@ INPUT CONTAINER
   align-items: center; /* Center content horizontally */
   border-radius: 5px;
   background-color: dimgray;
-  padding: 5px;
-  margin: 5px;
-  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.5); /* New property: Add a drop-shadow */
+  padding: 7px;
+  box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.5); /* New property: Add a drop-shadow */
+  height: max-content;
 }
 
 #user-input {
   width: 100%;
-  border-radius: 5px 0px 0px 5px;
+  border-radius: 3px;
   padding: 10px;
   max-height: 300px;
   overflow: auto;
@@ -187,27 +266,32 @@ INPUT CONTAINER
 
 .button {
   display: inline-block;
-  font-size: 28px;
-  padding: 10px 20px; /* adjust these values as needed */
+  font-size: 20px;
+  padding: 10px 10px; /* adjust these values as needed */
   font-family: Arial, sans-serif;
   text-align: center;
   text-decoration: none;
   color: #ffffff;
   background-color: #007bff;
   border: none;
-  border-radius: 4px;
+  border-radius: 3px;
   transition: background-color 0.3s ease;
   line-height: 1; /* adjust this value as needed */
   vertical-align: middle; /* this helps with vertical centering */
   height: 100%;
+  box-shadow: 0px 0px 4px 2px rgba(0, 0, 0, 0.3);
+
+
 }
 
 #submit-button {
   border-radius: 0px;
+  box-shadow: none;
 }
 
 #cancel-button {
   border-radius: 0px 5px 5px 0px;
+  box-shadow: none;
 }
 
 .button:hover {
@@ -238,19 +322,14 @@ MEMORIES
   background: #555; /* Color when handle itself is hovered */
 }
 
+.titleDescription {
+  color: red;
+}
+
 #memories {
-  display: inline-block;
-  overflow-y: auto;
-  gap: 10px;
-  background-color: lightgrey;
-  padding: 10px;
   flex-grow: 1;
-  width: 100%;
-  height: 100%;
-  border-radius: 5px;
-  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.5);
-  position: relative;
-  z-index: 1;
+  padding: 5px;
+  overflow-y: auto;
 }
 
 .memory-toolbar {
@@ -274,10 +353,16 @@ MEMORIES
   color: black;
 }
 
+.memoryTitle {
+  height: 100%;
+  width: 100%;
+  color:red;
+}
+
 .memory {
   text-align: left;
   padding: 0px 0px 0px 0px;
-  border-radius: 5px;
+  border-radius: 3px;
   background-color: white;
   min-height: 100px;
   max-height: 400px;
@@ -322,10 +407,6 @@ MEDIA ADJUSTMENTS
     flex-direction: column;
   }
 
-  h2 {
-    display: none;
-  }
-
   #tool-wrapper,
   #memory-wrapper,
   #tool-output,
@@ -346,4 +427,5 @@ MEDIA ADJUSTMENTS
   #tool-output {
     width: 100%;
   }
+
 }

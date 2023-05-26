@@ -130,6 +130,18 @@ function getMemoryContent() {
   }
 }
 
+function getAiConfigSetting(searchString) {
+  //if searchString containers multiple ["Memoryies"]["Memory"]["Memory-TItle"];
+}
+
+function generateGUID() {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    var r = (Math.random() * 16) | 0,
+      v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 // STRING OPERATIONS
 
 function buildMessage(userInput) {
@@ -266,6 +278,8 @@ function loadMemories() {
     memoriesDivContainer.removeChild(memoriesDivContainer.firstChild);
   }
   for (let memoryJSON of memoriesJSON) {
+    let memoryId = memoryJSON.Memory["id"];
+    let memoryTitle = memoryJSON.Memory["Memory-Title"];
     let memoryText = memoryJSON.Memory["Memory-Text"];
     let memoryImportance = memoryJSON.Memory["Important"];
     let memoryTokenLengh = memoryJSON.Memory["Token-Length"];
@@ -283,6 +297,8 @@ function loadMemories() {
     );
     memoriesDivContainer.appendChild(
       createMemory(
+        memoryId,
+        memoryTitle,
         memoryText,
         memoryImportance,
         memoryTokenLengh,
@@ -294,6 +310,7 @@ function loadMemories() {
   return memoriesJSON;
 }
 
+
 // AI PROFILE
 
 function createAiProfile() {
@@ -302,19 +319,33 @@ function createAiProfile() {
 
 // MEMORY FUNCTIONS
 
-function createMemory(text, important, tokenLength, timestamp) {
+
+function findMemoryById(id, aiConfig) {
+  let memories = aiConfig.Memories;
+  for (let i = 0; i < memories.length; i++) {
+      if (memories[i].Memory.id === id) {
+          return memories[i];
+      }
+  }
+  return null; // return null if no matching memory found
+}
+
+function createMemory(id, title, text, important, tokenLength, timestamp) {
   console.log("  - Creating memory '" + text + "'...");
 
   const memoryJSON = {
     Memory: {
+      "id": id,
+      "Memory-Title": title,
       "Memory-Text": text,
-      Important: important,
+      "Important": important,
       "Token-Length": tokenLength,
-      Timestamp: timestamp,
+      "Timestamp": timestamp
     },
   };
 
   const memoryContainer = createNewMemoryContainer(memoryJSON.Memory);
+
   const memoryTextWrapper = createMemoryTextWrapper(
     memoryJSON.Memory["Memory-Text"]
   );
@@ -375,22 +406,89 @@ function createMemoryTextWrapper(memoryText) {
 
 function createMemoryToolbar(memoryJSON) {
   console.log("  - Setting up toolbar now...");
-  let important = memoryJSON["Important"];
+  let importantOn = memoryJSON["Important"];
   const memoryToolbar = document.createElement("div");
   memoryToolbar.style.display = "flex";
-  memoryToolbar.style.justifyContent = "space-between"; // Update to space-between for left-aligned title
+  memoryToolbar.style.justifyContent = "space-between"; // Updated to space-between for right-aligned buttons
   memoryToolbar.className = "memory-toolbar";
 
   // Create and add the title element
   const titleElement = document.createElement("div");
   titleElement.id = "memoryToolbarTitle";
-  titleElement.textContent = "Memory Title";
+  titleElement.textContent = memoryJSON["Memory-Title"];
   titleElement.style.textAlign = "left";
   titleElement.style.margin = "10px";
+
+  titleElement.addEventListener("dblclick", function (e) {
+    // Create a new input element
+    const inputElement = document.createElement("input");
+    inputElement.id = "memoryToolbarTitleInput";
+    inputElement.type = "text";
+    inputElement.value = titleElement.textContent;
+
+    // Apply modern styles to the input element
+    inputElement.style.padding = "5px";
+    inputElement.style.border = "none";
+    inputElement.style.borderRadius = "5px";
+    inputElement.style.boxShadow = "0 2px 4px rgba(0, 0, 0, 0.1)";
+    inputElement.style.width = "200px";
+    inputElement.style.fontFamily = "Arial, sans-serif";
+    inputElement.style.fontSize = "14px";
+    inputElement.style.margin = "5px";
+
+    // Replace the title element with the input element in the parent
+    memoryToolbar.replaceChild(inputElement, titleElement);
+
+    // Focus on the new input element
+    inputElement.focus();
+
+    // Add event listener to input element to revert back to title element when focus is lost
+    inputElement.addEventListener("blur", function (e) {
+                
+      let memoryContainer = inputElement.closest(".memory");
+      let metadataJSON = memoryContainer.metadata;
+      let memoryInnerHTML = memoryContainer.innerHTML;
+      let memoryId = metadataJSON.Memory["id"];
+      let memoryToDelete = findMemoryById(memoryId, aiConfig);
+      let memoryNewTitle = e.target.value;
+      console.log("Delete button clicked...");
+      console.log(" - AICONFIG: '" + JSON.stringify(aiConfig) + "'");
+      console.log(" - AICONFIG MEMORIES: '" + JSON.stringify(aiConfig.Memories));
+      console.log(" - MEMORY HTML: '" + memoryInnerHTML + "'");
+      console.log(" - MEMORY METADATA: '" + JSON.stringify(metadataJSON) + "'");
+      console.log(" - MEMORY ID: '" + memoryId + "'");
+      console.log(" - MEMORY TO DELETE: '" + JSON.stringify(memoryToDelete) + "'");
+      console.log(" - NEW TITLE: '" + memoryNewTitle + "'");
+      updateMemoryValue(memoryId,"Memory-Title",memoryNewTitle,aiConfig)
+      saveAIConfig();
+      titleElement.textContent = inputElement.value;
+      memoryToolbar.replaceChild(titleElement, inputElement);
+    });
+
+    // Add global click event listener to check if click happened outside inputElement
+    document.addEventListener(
+      "click",
+      function (e) {
+        const isClickInside = inputElement.contains(e.target);
+        if (!isClickInside) {
+          inputElement.blur();
+        }
+      },
+      { once: true }
+    ); // use { once: true } so the event is automatically removed after it is triggered once
+  });
+
   memoryToolbar.appendChild(titleElement);
 
-  memoryToolbar.appendChild(createImportantButton(important));
-  memoryToolbar.appendChild(createDeleteButton());
+  // Create a container for the buttons to group them together
+  const buttonContainer = document.createElement("div");
+  buttonContainer.style.display = "flex";
+  buttonContainer.appendChild(createImportantButton(importantOn));
+  buttonContainer.appendChild(createDeleteButton());
+
+  // Add the button container to the memoryToolbar
+  memoryToolbar.appendChild(buttonContainer);
+
   return memoryToolbar;
 }
 
@@ -399,76 +497,83 @@ function createImportantButton(important) {
   importantButton.innerHTML = "<strong>!</strong>";
   importantButton.textContent = "!";
   importantButton.className = "memory-toolbar-button memory-important-button";
-  importantButton.style.color = important ? "red" : "gray";
   importantButton.style.fontSize = "24px";
+
+  updateButtonStyle();
+
   importantButton.addEventListener("click", () => {
-    const memoryWrapper = importantButton.parentNode.parentNode;
-    const memoryWrapperMetadata = memoryWrapper.metadata.Memory;
-    console.log(
-      "Important button clicked for '" +
-        memoryWrapperMetadata["Memory-Text"] +
-        "' memory..."
-    );
-    let color = importantButton.style.color;
-    if (color === "gray") {
-      important = true;
-      console.log(
-        " - Marking importance for '" +
-          memoryWrapperMetadata["Memory-Text"] +
-          "' to " +
-          important
-      );
-      importantButton.style.color = "red";
-    } else if (color === "red") {
-      important = false;
-      importantButton.style.color = "gray";
-      console.log(
-        " - Marking importance for '" +
-          memoryWrapperMetadata["Memory-Text"] +
-          "' to " +
-          important
-      );
-    }
+    const memoryContainer = importantButton.closest(".memory");
+    let metadataJSON = memoryContainer.metadata;
+    let memoryInnerHTML = memoryContainer.innerHTML;
+    let memoryId = metadataJSON.Memory["id"];
+    console.log("Important button clicked...");
+    console.log(" - MEMORY HTML: '" + memoryInnerHTML) + "'";
+    console.log(" - MEMORY METADATA: '" + JSON.stringify(metadataJSON) + "'");
+    console.log(" - MEMORY ID: '" + memoryId + "'");
 
-    const memoryIndex = aiConfig["Memories"].findIndex(
-      (memory) =>
-        memory["Memory"]["Memory-Text"].trim() ===
-        memoryWrapper.metadata["Memory"]["Memory-Text"].trim()
-    );
-
-    console.log(" - memoryindex: " + memoryIndex);
-    if (memoryIndex > -1) {
-      aiConfig["Memories"][memoryIndex]["Memory"]["Important"] =
-        !aiConfig["Memories"][memoryIndex]["Memory"]["Important"];
-      saveAIConfig();
-    }
+    const newImportant = !important;
+    updateMemoryValue(memoryId, "Important", newImportant, aiConfig);
+    important = newImportant;
+    updateButtonStyle();
+    saveAIConfig();
   });
 
   return importantButton;
+
+  function updateButtonStyle() {
+    importantButton.style.color = important ? "red" : "gray";
+  }
+}
+
+function updateMemoryValue(id, key, newValue, aiConfig) {
+  let memory = findMemoryById(id, aiConfig);
+  if (memory !== null) {
+      if (memory.Memory.hasOwnProperty(key)) {
+          memory.Memory[key] = newValue;
+      } else {
+          console.log("Invalid key!");
+      }
+  } else {
+      console.log("Memory not found!");
+  }
 }
 
 function createDeleteButton() {
   const deleteButton = document.createElement("button");
-  deleteButton.innerHTML = "❌";
+  deleteButton.innerHTML = "\u2716";
   deleteButton.className = "memory-toolbar-button memory-delete-button";
   deleteButton.addEventListener("click", () => {
-    const memoryWrapper = deleteButton.parentNode.parentNode;
-    console.log("Deleting memory " + JSON.stringify(memoryWrapper.metadata));
-    const memoryIndex = aiConfig["Memories"].findIndex(
-      (memory) =>
-        JSON.stringify(memory) === JSON.stringify(memoryWrapper.metadata)
-    );
-    if (memoryIndex > -1) {
-      aiConfig["Memories"].splice(memoryIndex, 1);
-    }
+    let memoryContainer = deleteButton.closest(".memory");
+    let metadataJSON = memoryContainer.metadata;
+    let memoryInnerHTML = memoryContainer.innerHTML;
+    let memoryId = metadataJSON.Memory["id"];
+    let memoryToDelete = findMemoryById(memoryId, aiConfig);
 
-    memoryWrapper.remove();
-    console.log(" - Deleted memory " + JSON.stringify(memoryWrapper.metadata));
+    console.log("Delete button clicked...");
+    console.log(" - AICONFIG: '" + JSON.stringify(aiConfig) + "'");
+    console.log(" - AICONFIG MEMORIES: '" + JSON.stringify(aiConfig.Memories));
+    console.log(" - MEMORY HTML: '" + memoryInnerHTML + "'");
+    console.log(" - MEMORY METADATA: '" + JSON.stringify(metadataJSON) + "'");
+    console.log(" - MEMORY ID: '" + memoryId + "'");
+    console.log(" - MEMORY TO DELETE: '" + JSON.stringify(memoryToDelete) + "'");
+
+    if (memoryToDelete) {
+      const index = aiConfig.Memories.indexOf(memoryToDelete);
+      console.log(" - MEMORY INDEX: '" + index + "'");
+      if (index !== -1) {
+        aiConfig.Memories.splice(index, 1);
+        console.log(" - Memory removed from AI config.");
+      }
+    } else {
+      console.log(" - Memory not found in AI config.");
+    }
+    memoryContainer.remove();
     saveAIConfig();
   });
 
   return deleteButton;
 }
+
 
 function memoryElementExists(newMemory) {
   console.log(
@@ -544,6 +649,14 @@ function addMemoryToLocalStorage(memory) {
 // DOC LOADED
 
 document.addEventListener("DOMContentLoaded", function () {
+  fetch("toolbar.html")
+    .then((response) => response.text())
+    .then((data) => {
+      document.getElementById("toolbarContainer").innerHTML = data;
+      // Dispatch a custom event
+      document.dispatchEvent(new CustomEvent("toolbarLoaded"));
+    });
+
   aiName = aiConfig["AI-Name"];
   aiPersonality = aiConfig["AI-Personality"];
   aiGoals = aiConfig["AI-Goals"];
@@ -583,111 +696,172 @@ document.addEventListener("DOMContentLoaded", function () {
     userInput.disabled = false;
   });
 
-  selectById("clipboardButton").addEventListener("click", () => {
-    const copiedText = [...selectById("tool-output").children]
-      .map((child) => child.textContent)
-      .join("\n");
-    if (copiedText.trim() !== "") {
-      navigator.clipboard.writeText(copiedText);
-      console.log("Text copied to clipboard:", copiedText);
-    }
-  });
-
-  selectById("memoryButton").addEventListener("click", (e) => {
-    console.log("Creating memory...");
-    memoriesDivContainer = selectById("memories");
-    e.preventDefault();
-    const selectedText = window.getSelection().toString();
-    if (selectedText !== "") {
-      let timestamp = new Date().toISOString();
-      let tokenLength = countTokens(selectedText);
-      newMemory = createMemory(selectedText, false, tokenLength, timestamp);
-      console.log(newMemory.metadata);
-      aiConfig["Memories"].push(newMemory.metadata);
-      memoriesDivContainer.appendChild(newMemory);
-      saveAIConfig();
-    }
-  });
-
-  selectById("clearButton").addEventListener("click", (e) => {
-    const overlay = document.createElement("div");
-    overlay.style.position = "fixed";
-    overlay.style.top = "0";
-    overlay.style.left = "0";
-    overlay.style.width = "100%";
-    overlay.style.height = "100%";
-    overlay.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
-    overlay.style.display = "flex";
-    overlay.style.justifyContent = "center";
-    overlay.style.alignItems = "center";
-    overlay.style.zIndex = "9999";
-
-    // Create prompt box
-    const promptBox = document.createElement("div");
-    promptBox.style.backgroundColor = "white";
-    promptBox.style.padding = "20px";
-    promptBox.style.borderRadius = "5px";
-    promptBox.style.textAlign = "center";
-    overlay.appendChild(promptBox);
-
-    // Create prompt text
-    const promptText = document.createElement("p");
-    promptText.textContent = "Clear chat history?";
-    promptBox.appendChild(promptText);
-
-    // Create yes button
-    const yesButton = document.createElement("button");
-    yesButton.textContent = "Yes";
-    yesButton.style.marginRight = "10px";
-    yesButton.className = "button";
-    promptBox.appendChild(yesButton);
-
-    // Create no button
-    const noButton = document.createElement("button");
-    noButton.textContent = "No";
-    noButton.className = "button";
-    promptBox.appendChild(noButton);
-
-    // Append the overlay to the document body
-    document.body.appendChild(overlay);
-
-    // Add event listeners to the buttons
-    yesButton.addEventListener("click", () => {
-      // Clear all child items
-      let outputTextInner = selectById("tool-output-inner");
-      while (outputTextInner.firstChild) {
-        outputTextInner.removeChild(outputTextInner.firstChild);
+  document.addEventListener("toolbarLoaded", function () {
+    selectById("clipboardButton").addEventListener("click", () => {
+      const copiedText = [...selectById("tool-output").children]
+        .map((child) => child.textContent)
+        .join("\n");
+      if (copiedText.trim() !== "") {
+        navigator.clipboard.writeText(copiedText);
+        console.log("Text copied to clipboard:", copiedText);
       }
-      // Remove the overlay
-      document.body.removeChild(overlay);
     });
 
-    noButton.addEventListener("click", () => {
-      // Remove the overlay
-      document.body.removeChild(overlay);
+    selectById("memoryButton").addEventListener("click", async (e) => {
+      console.log("Creating memory...");
+      memoriesDivContainer = selectById("memories");
+      e.preventDefault();
+      const selectedText = window.getSelection().toString();
+      if (selectedText !== "") {
+        let timestamp = new Date().toISOString();
+        let tokenLength = countTokens(selectedText);
+        let response = await sendMessageToOpenAI("Take this text and return a title.  Only return the title and nothing else.  Return a title even if it's gibberish.\n" + selectedText + "")
+        let memoryTitle = response.choices[0].message.content.replace(/^[\W_]+|[\W_]+$/g, '');
+        let newMemory = createMemory(generateGUID, memoryTitle, selectedText, false, tokenLength, timestamp);
+        console.log(newMemory.metadata);
+        aiConfig["Memories"].push(newMemory.metadata);
+        memoriesDivContainer.appendChild(newMemory);
+        saveAIConfig();
+      }
+    });
+
+    selectById("clearButton").addEventListener("click", (e) => {
+      const overlay = document.createElement("div");
+      overlay.style.position = "fixed";
+      overlay.style.top = "0";
+      overlay.style.left = "0";
+      overlay.style.width = "100%";
+      overlay.style.height = "100%";
+      overlay.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+      overlay.style.display = "flex";
+      overlay.style.justifyContent = "center";
+      overlay.style.alignItems = "center";
+      overlay.style.zIndex = "9999";
+
+      // Create prompt box
+      const promptBox = document.createElement("div");
+      promptBox.style.backgroundColor = "white";
+      promptBox.style.padding = "20px";
+      promptBox.style.borderRadius = "5px";
+      promptBox.style.textAlign = "center";
+      overlay.appendChild(promptBox);
+
+      // Create prompt text
+      const promptText = document.createElement("p");
+      promptText.textContent = "Clear chat history?";
+      promptBox.appendChild(promptText);
+
+      // Create yes button
+      const yesButton = document.createElement("button");
+      yesButton.textContent = "Yes";
+      yesButton.style.marginRight = "10px";
+      yesButton.className = "button";
+      promptBox.appendChild(yesButton);
+
+      // Create no button
+      const noButton = document.createElement("button");
+      noButton.textContent = "No";
+      noButton.className = "button";
+      promptBox.appendChild(noButton);
+
+      // Append the overlay to the document body
+      document.body.appendChild(overlay);
+
+      // Add event listeners to the buttons
+      yesButton.addEventListener("click", () => {
+        // Clear all child items
+        let outputTextInner = selectById("tool-output-inner");
+        while (outputTextInner.firstChild) {
+          outputTextInner.removeChild(outputTextInner.firstChild);
+        }
+        // Remove the overlay
+        document.body.removeChild(overlay);
+      });
+
+      noButton.addEventListener("click", () => {
+        // Remove the overlay
+        document.body.removeChild(overlay);
+      });
+    });
+
+    selectById("chatHistoryToggle").addEventListener("click", (e) => {
+      console.log("CHAT HISTORY TOGGLE PRESSED");
+      const toggleButton = selectById("chatHistoryToggle");
+
+      if (chatHistoryToggle === "infinite") {
+        chatHistoryToggle = "aiLastOutput";
+        toggleButton.innerHTML = "&#x1F4DA;";
+      } else if (chatHistoryToggle === "aiLastOutput") {
+        chatHistoryToggle = "currentInput";
+        toggleButton.innerHTML = "&#x1F4D7;";
+      } else if (chatHistoryToggle === "currentInput") {
+        chatHistoryToggle = "infinite";
+        toggleButton.innerHTML = "&#x267E;&#xFE0F;";
+      } else {
+        // Handle the case when the starting value is not accounted for
+        chatHistoryToggle = "infinite";
+        toggleButton.innerHTML = "&#x267E;&#xFE0F;";
+      }
+
+      console.log(" - Chat history toggle is now set to " + chatHistoryToggle);
+    });
+
+    selectById("menuButton").addEventListener("click", (e) => {
+      var menu = document.getElementById("popoutMenu");
+      var buttonRect = event.target.getBoundingClientRect();
+      menu.style.display = "block";
+      var menuRect = menu.getBoundingClientRect();
+      var top = buttonRect.bottom;
+      var left = buttonRect.left - menuRect.width;
+      if (left < 0) {
+        left = 0;
+      }
+
+      if (top + menuRect.height > window.innerHeight) {
+        top = window.innerHeight - menuRect.height;
+      }
+      menu.style.top = top + "px";
+      menu.style.left = left + "px";
+    });
+
+    selectById("submenu-memories").addEventListener("click", (e) => {
+      var toolWrapper = document.getElementById("tool-wrapper");
+      var memoryWrapper = document.getElementById("memory-wrapper");
+      var memoriesTitle = document.getElementById("memoriesTitle");
+
+      // Toggle the visibility of the wrappers
+      toolWrapper.style.display =
+        toolWrapper.style.display === "none" ? "block" : "none";
+      memoryWrapper.style.display =
+        memoryWrapper.style.display === "none" ? "block" : "none";
+      memoriesTitle.style.display =
+        memoriesTitle.style.display === "none" ? "block" : "none";
+    });
+
+    selectById("submenu-tools").addEventListener("click", (e) => {
+      // Get the submenu list under 'Tools'
+      var submenuList = e.target.nextElementSibling;
+
+      // Get the arrow element
+      var arrow = e.target.querySelector(".arrow");
+
+      // Toggle the visibility of the submenu list
+      if (submenuList.style.display === "none") {
+        submenuList.style.display = "block";
+        arrow.innerHTML = "&#x25BE"; // Change the arrow to point downwards
+      } else {
+        submenuList.style.display = "none";
+        arrow.innerHTML = "&#x25B8"; // Change the arrow to point rightwards
+      }
     });
   });
 
-  selectById("chatHistoryToggle").addEventListener("click", (e) => {
-    console.log("CHAT HISTORY TOGGLE PRESSED");
-    const toggleButton = selectById("chatHistoryToggle");
+  document.addEventListener("click", function (event) {
+    var menu = document.getElementById("popoutMenu");
 
-    if (chatHistoryToggle === "infinite") {
-      chatHistoryToggle = "aiLastOutput";
-      toggleButton.textContent = "📚";
-    } else if (chatHistoryToggle === "aiLastOutput") {
-      chatHistoryToggle = "currentInput";
-      toggleButton.textContent = "📗";
-    } else if (chatHistoryToggle === "currentInput") {
-      chatHistoryToggle = "infinite";
-      toggleButton.textContent = "♾️";
-    } else {
-      // Handle the case when the starting value is not accounted for
-      chatHistoryToggle = "infinite";
-      toggleButton.textContent = "♾️";
+    if (event.target.id !== "menuButton" && !menu.contains(event.target)) {
+      menu.style.display = "none";
     }
-
-    console.log(" - Chat history toggle is now set to " + chatHistoryToggle);
   });
 
   console.log(" - Checking for " + aiName + "'s configuration file...");

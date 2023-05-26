@@ -34,6 +34,8 @@ let aiConfig = {
     "Memories": [
         {
             "Memory": {
+                "id": "892ce156-ae76-412e-8c74-1c23d84ed215", 
+                "Memory-Title": "Standard GPT",
                 "Memory-Text": "You are the standard Chat GPT AI.",
                 "Important": true,
                 "Token-Length": "12",
@@ -42,6 +44,8 @@ let aiConfig = {
         },
         {
             "Memory": {
+                "id": "c847eae2-1fc4-4104-8d21-4892b30df51d",
+                "Memory-Title": "OpenAI Rules",
                 "Memory-Text": "You must adhere to the rules of OpenAI.",
                 "Important": true,
                 "Token-Length": "50",

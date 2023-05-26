@@ -1,5 +1,22 @@
 ## Changelog
 
+## [2.2.0] - 2023-05-26 - AI Tools Enhancements
+
+### Added
+
+- Replaced index.html with chatty.html for improved functionality and UI.
+- Implemented auto-generated titles for memory cards.
+- Assigned unique IDs to memory keys in tool JSON.
+- Created new functions in chatty.js for easier key and value management in JSON.
+- Enhanced efficiency of memory functions.
+- Created a separate html file called "toolbar.html" to contain the toolbar.
+- Introduced a new menu feature with tool selection, memory selection, and settings.
+- Settings options are not yet defined.
+
+### Updated
+
+- Updated CSS styles in tools.css with multiple changes.
+
 ## [2.1.3] - 2023-05-26 - Fixed sendMessageToOpenAi and UI Improvements
 
 ### Changed
