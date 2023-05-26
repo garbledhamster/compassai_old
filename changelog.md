@@ -1,5 +1,3 @@
-Certainly! I'll update the changelog with titles for each version.
-
 ## Changelog
 
 ## [2.1.2] - 2023-05-26 - UI Enhancements and Bug Fixes
