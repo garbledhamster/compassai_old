@@ -27,14 +27,31 @@ let memoriesDivContainer;
 
 function appendChatBubble(parent, text, userType) {
   let currentDate = new Date().toLocaleString();
+
+  // Configure marked with syntax highlighting
+  marked.setOptions({
+    highlight: function (code) {
+      return hljs.highlightAuto(code).value;
+    },
+  });
+
   let chatBubbleText = document.createElement("div");
-  chatBubbleText.className = "chat-bubble user";
-  chatBubbleText.innerHTML = `${text}<br>${currentDate}`;
+  chatBubbleText.className = "chat-bubble user-message";
+
+  // Use the parse method directly from marked
+  let markdownText = marked.parse(`${text}
+  ${currentDate}`);
+
+  chatBubbleText.innerHTML = markdownText;
+
   console.log("NEW CHAT BUBBLE:", text); // Debug statement
-  const newDiv = document.createElement("div");
-  newDiv.className = userType + "-message";
-  newDiv.innerHTML = chatBubbleText.innerHTML;
-  parent.appendChild(newDiv);
+
+  const chatBubble = document.createElement("div");
+  chatBubble.className = userType + "-message";
+  chatBubble.innerHTML = chatBubbleText.innerHTML;
+
+  parent.appendChild(chatBubble);
+
   parent.scrollTop = parent.scrollHeight;
 }
 
@@ -60,15 +77,6 @@ async function sendMessageToOpenAI(message) {
     try {
       const response = await fetch(openaiAPI, requestParams);
       //return "Hi there";
-      if (response.status === 429) {
-        console.log("Too Many Requests. Retrying in 5 seconds...");
-        await new Promise((resolve) => setTimeout(resolve, 5000));
-      } else if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      } else {
-        const data = await response.json();
-        return data.choices[0].message.content;
-      }
     } catch (error) {
       console.error(error);
     }
@@ -125,7 +133,7 @@ function buildMessage(userInput) {
     let memoryContent = getMemoryContent();
 
     if (!memoryContent) {
-      memoryContent = '';
+      memoryContent = "";
     }
 
     let message = `${memoryContent}\n\n${userInput}`.trim();
@@ -133,51 +141,57 @@ function buildMessage(userInput) {
     if (chatHistoryToggle === "infinite") {
       console.log(" - Chat history is toggled, sending chat history");
       const toolOutputInner = document.getElementById("tool-output-inner");
-    
+
       if (!toolOutputInner) {
         console.log(" - BUILT MESSAGE 1: " + message);
         return message;
       }
-    
+
       let combinedMessages = Array.from(toolOutputInner.children)
-        .map((messageElement) => {
+        .map(messageElement => {
           let lines = messageElement.innerText.trim().split("\n");
           if (lines.length > 1) {
             let lastLine = lines.pop();
-            let prefix = messageElement.classList.contains("user-message") ? "USER:" : "AI:";
+            let prefix = messageElement.classList.contains("user-message")
+              ? "USER:"
+              : "AI:";
             return prefix + " '" + lines.join("\n") + "': " + lastLine;
           } else {
-            let prefix = messageElement.classList.contains("user-message") ? "USER:" : "AI:";
+            let prefix = messageElement.classList.contains("user-message")
+              ? "USER:"
+              : "AI:";
             return prefix + " " + lines[0];
           }
         })
         .join("\n");
-    
+
       return combinedMessages + "\n" + message;
     }
-    
+
     if (chatHistoryToggle === "aiLastOutput") {
       console.log(" - Chat history is toggled, sending last AI message");
       const toolOutputInner = document.getElementById("tool-output-inner");
-    
+
       if (!toolOutputInner) {
         console.log(" - BUILT MESSAGE 1: " + message);
         return message;
       }
-    
-      let lastAiMessage = '';
-      const messageElements = Array.from(toolOutputInner.getElementsByClassName("ai-message"));
+
+      let lastAiMessage = "";
+      const messageElements = Array.from(
+        toolOutputInner.getElementsByClassName("ai-message")
+      );
       if (messageElements.length > 0) {
-        const lastMessageElement = messageElements[messageElements.length - 2];
+        const lastMessageElement = messageElements[messageElements.length - 1];
         lastAiMessage = "AI: " + lastMessageElement.innerText.trim();
       }
-    
+
       return lastAiMessage + "\n" + message;
     }
-    
+
     return message;
   } catch (error) {
-    console.error('Error building message:', error);
+    console.error("Error building message:", error);
   }
 }
 
@@ -192,7 +206,7 @@ function trimMessage(message, maxTokens) {
 
   return message
     .split(" ")
-    .filter((token) => {
+    .filter(token => {
       if (tokenCount + Math.ceil(token.length / 4) <= maxTokens) {
         tokenCount += Math.ceil(token.length / 4);
         return true;
@@ -299,16 +313,16 @@ function createMemory(text, important, tokenLength, timestamp) {
   const toolbarMemory = createMemoryToolbar(memoryJSON.Memory);
 
   // Add styles to memoryContainer to make it a flex column container
-  memoryContainer.style.display = 'flex';
-  memoryContainer.style.flexDirection = 'column';
+  memoryContainer.style.display = "flex";
+  memoryContainer.style.flexDirection = "column";
 
   // Add styles to toolbarMemory to snap it to the top
-  toolbarMemory.style.position = 'sticky';
-  toolbarMemory.style.top = '0';
+  toolbarMemory.style.position = "sticky";
+  toolbarMemory.style.top = "0";
 
   // Add styles to memoryTextWrapper to make it fill the rest of the space
-  memoryTextWrapper.style.flexGrow = '1';
-  memoryTextWrapper.style.overflowY = 'auto';
+  memoryTextWrapper.style.flexGrow = "1";
+  memoryTextWrapper.style.overflowY = "auto";
 
   memoryContainer.appendChild(toolbarMemory);
   memoryContainer.appendChild(memoryTextWrapper);
@@ -358,15 +372,15 @@ function createMemoryToolbar(memoryJSON) {
   memoryToolbar.style.display = "flex";
   memoryToolbar.style.justifyContent = "space-between"; // Update to space-between for left-aligned title
   memoryToolbar.className = "memory-toolbar";
-  
+
   // Create and add the title element
   const titleElement = document.createElement("div");
-  titleElement.id = "memoryToolbarTitle"
+  titleElement.id = "memoryToolbarTitle";
   titleElement.textContent = "Memory Title";
   titleElement.style.textAlign = "left";
   titleElement.style.margin = "10px";
   memoryToolbar.appendChild(titleElement);
-  
+
   memoryToolbar.appendChild(createImportantButton(important));
   memoryToolbar.appendChild(createDeleteButton());
   return memoryToolbar;
@@ -409,7 +423,7 @@ function createImportantButton(important) {
     }
 
     const memoryIndex = aiConfig["Memories"].findIndex(
-      (memory) =>
+      memory =>
         memory["Memory"]["Memory-Text"].trim() ===
         memoryWrapper.metadata["Memory"]["Memory-Text"].trim()
     );
@@ -433,7 +447,7 @@ function createDeleteButton() {
     const memoryWrapper = deleteButton.parentNode.parentNode;
     console.log("Deleting memory " + JSON.stringify(memoryWrapper.metadata));
     const memoryIndex = aiConfig["Memories"].findIndex(
-      (memory) =>
+      memory =>
         JSON.stringify(memory) === JSON.stringify(memoryWrapper.metadata)
     );
     if (memoryIndex > -1) {
@@ -501,7 +515,7 @@ function addMemoryToLocalStorage(memory) {
     if (isDuplicate) {
       // Memory already exists, update it
       const existingMemoryIndex = aiConfig["Memories"].findIndex(
-        (memory) => memory["Memory"]["Memory-Text"] === text
+        memory => memory["Memory"]["Memory-Text"] === text
       );
       aiConfig["Memories"][existingMemoryIndex]["Memory"]["Important"] =
         String(important);
@@ -538,15 +552,15 @@ document.addEventListener("DOMContentLoaded", function () {
   // EVENT LISTENERS
 
   console.log(" - Setting " + aiName + "'s buttons...");
-  selectById("submit-button").addEventListener("click", async (event) => {
+  selectById("submit-button").addEventListener("click", async event => {
     const [submitButton, userInput, toolOutputInner] = [
       "submit-button",
       "user-input",
       "tool-output-inner",
     ].map(selectById);
-    console.log("USER INPUT 0: " + userInput.value)
-    
-    let userInputText = userInput.value.replace(/\n/g, "<br>");
+    console.log("USER INPUT 0: " + userInput.value);
+
+    let userInputText = userInput.value;
     console.log("USER INPUT 1: " + userInputText);
 
     submitButton.disabled = true;
@@ -576,7 +590,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   selectById("clipboardButton").addEventListener("click", () => {
     const copiedText = [...selectById("tool-output").children]
-      .map((child) => child.textContent)
+      .map(child => child.textContent)
       .join("\n");
     if (copiedText.trim() !== "") {
       navigator.clipboard.writeText(copiedText);
@@ -584,7 +598,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  selectById("memoryButton").addEventListener("click", (e) => {
+  selectById("memoryButton").addEventListener("click", e => {
     console.log("Creating memory...");
     memoriesDivContainer = selectById("memories");
     e.preventDefault();
@@ -600,7 +614,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  selectById("clearButton").addEventListener("click", (e) => {
+  selectById("clearButton").addEventListener("click", e => {
     const overlay = document.createElement("div");
     overlay.style.position = "fixed";
     overlay.style.top = "0";
@@ -612,7 +626,7 @@ document.addEventListener("DOMContentLoaded", function () {
     overlay.style.justifyContent = "center";
     overlay.style.alignItems = "center";
     overlay.style.zIndex = "9999";
-  
+
     // Create prompt box
     const promptBox = document.createElement("div");
     promptBox.style.backgroundColor = "white";
@@ -620,28 +634,28 @@ document.addEventListener("DOMContentLoaded", function () {
     promptBox.style.borderRadius = "5px";
     promptBox.style.textAlign = "center";
     overlay.appendChild(promptBox);
-  
+
     // Create prompt text
     const promptText = document.createElement("p");
     promptText.textContent = "Clear chat history?";
     promptBox.appendChild(promptText);
-  
+
     // Create yes button
     const yesButton = document.createElement("button");
     yesButton.textContent = "Yes";
     yesButton.style.marginRight = "10px";
-    yesButton.className="button";
+    yesButton.className = "button";
     promptBox.appendChild(yesButton);
-  
+
     // Create no button
     const noButton = document.createElement("button");
     noButton.textContent = "No";
-    noButton.className="button";
+    noButton.className = "button";
     promptBox.appendChild(noButton);
-  
+
     // Append the overlay to the document body
     document.body.appendChild(overlay);
-  
+
     // Add event listeners to the buttons
     yesButton.addEventListener("click", () => {
       // Clear all child items
@@ -652,17 +666,17 @@ document.addEventListener("DOMContentLoaded", function () {
       // Remove the overlay
       document.body.removeChild(overlay);
     });
-  
+
     noButton.addEventListener("click", () => {
       // Remove the overlay
       document.body.removeChild(overlay);
     });
   });
-  
-  selectById("chatHistoryToggle").addEventListener("click", (e) => {
+
+  selectById("chatHistoryToggle").addEventListener("click", e => {
     console.log("CHAT HISTORY TOGGLE PRESSED");
     const toggleButton = selectById("chatHistoryToggle");
-  
+
     if (chatHistoryToggle === "infinite") {
       chatHistoryToggle = "aiLastOutput";
       toggleButton.textContent = "📚";
@@ -677,11 +691,9 @@ document.addEventListener("DOMContentLoaded", function () {
       chatHistoryToggle = "infinite";
       toggleButton.textContent = "♾️";
     }
-  
+
     console.log(" - Chat history toggle is now set to " + chatHistoryToggle);
   });
-  
-
 
   console.log(" - Checking for " + aiName + "'s configuration file...");
   if (!checkAiConfigFileExists()) {

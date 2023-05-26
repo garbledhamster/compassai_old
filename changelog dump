@@ -1,5 +1,0 @@
-- fixed issue in chef.html java script ordering
-- fixed issue in index.html with extra </body> tag
-- fixed issue in index.html java script ordering
-- updated json template in chef.js to be a bit more robust
-- reordered the entire tools.js file

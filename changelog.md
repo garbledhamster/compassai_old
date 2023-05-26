@@ -1,99 +1,115 @@
-# Changelog
+Certainly! I'll update the changelog with titles for each version.
 
-## [2.1.1] - 2023-05-25 - Added Chat History Control Features
+## Changelog
 
-### Added
-- Created clear chat history button.
-- Created toggle button for changing how many messages are sent in regards to history.
-
-## [2.1.0] - 2023-05-25 - Major Update to Tools
+## [2.1.2] - 2023-05-26 - UI Enhancements and Bug Fixes
 
 ### Added
 
-- AI Profiles in JSON for all tools: This new feature allows the AI tools to have a unique profile that can be easily modified and managed through a JSON file.
-- New GUI for all Tools: A new user interface has been implemented for all tools, improving usability and overall user experience.
+- Integrated highlight.js and marked.js in chat bubbles.
 
 ### Changed
 
-- CSS Styles and Fonts: The CSS styles and fonts across all tools have been updated to make the UI more modern and easy to read.
-- Submit-Button in Tools.js: The submit-button function in the tools.js file has been completely rebuilt for improved performance and compatibility with the new GUI.
-- Several Functions in Tools.js: Multiple functions in the tools.js file have been rebuilt to enhance their performance and ensure better integration with the new features.
-
-## [2.0.6] - 2023-05-24
-
-### Added
-
-- Created a new js file called "chatty.js" which serves as the ai profile and storage container for conversations and memories.
-- Added chatty.js to index.html and chatty.html.
-
-### Changed
-
-- Rebuilt all of the Memory functions.
-- Memories now load and save to the browsers local storage.
-- Memory "Important" button is now retained and loads into the user input.
-- Memory "Delete" button
+- Removed top gradient in output box.
+- Modified userInputText variable in tools.js.
 
 ### Fixed
 
-- Fixed order of scripts in chatty.html.
+- Rectified increment issue in lastMessageElement.
 
-## [2.0.5] - 2023-05-23
+## [2.1.1] - 2023-05-25 - Chat History Control Update
 
-### Fixed
+### Added
 
-- Fixed issue in chef.html java script ordering
-- Fixed issue in index.html with extra </body> tag
-- Fixed issue in index.html java script ordering
+- Clear chat history button.
+- Toggle button to control message history.
+
+## [2.1.0] - 2023-05-25 - Major Tools Overhaul
+
+### Added
+
+- AI profiles in JSON for all tools.
+- New GUI for all tools.
 
 ### Changed
 
-- Updated json template in chef.js to be a bit more robust
-- Reordered the entire tools.js file
+- Updated CSS styles and fonts.
+- Rebuilt submit-button in tools.js.
+- Optimized several functions in tools.js.
 
-## [2.0.4] - 2023-05-23
+## [2.0.6] - 2023-05-24 - Memory and Chat Profile Enhancements
+
+### Added
+
+- chatty.js file for AI profile and storage.
+- Included chatty.js in index.html and chatty.html.
+
+### Changed
+
+- Rebuilt all memory functions.
+- Memory functions now use local storage.
+- Updated "Important" and "Delete" buttons in memory.
+
+### Fixed
+
+- Corrected script order in chatty.html.
+
+## [2.0.5] - 2023-05-23 - Code Cleanup and Organization
+
+### Fixed
+
+- Fixed script ordering in chef.html and index.html.
+- Removed extra </body> tag in index.html.
+
+### Changed
+
+- Enhanced json template in chef.js.
+- Reordered tools.js file.
+
+## [2.0.4] - 2023-05-23 - Documentation Updates
 
 ### Updated
 
-- Updated README.md file
+- Updated README.md.
 
-## [2.0.3] - 2023-05-23
-
-### Changed
-
-- Updated chef.html to use the new interface
-- Changes made to tools.js for improvements
-
-## [2.0.2] - 2023-05-23
-
-### Added
-
-- Created chef.js file to implement data operations
-
-## [2.0.1] - 2023-05-23
-
-### Added
-
-- .gitignore file
-
-## [2.0.0] - 2023-05-22
+## [2.0.3] - 2023-05-23 - Chef Interface Improvements
 
 ### Changed
 
-- Interface now uses modern CSS elements
-- JavaScript functions optimized for shorter lines of code
-- Interface fine-tuned for mobile compatibility
-- innerHTML of output-container converted to an iframe
+- Chef.html uses new interface.
+- Tools.js improvements.
+
+## [2.0.2] - 2023-05-23 - Chef Data Operations Integration
 
 ### Added
 
-- New memory system for tracking tasks
-- Clipboard feature for copying AI output
+- Created chef.js for data operations.
 
-## [1.0.0] - 2023-04-22
+## [2.0.1] - 2023-05-23 - Git Management Enhancements
 
 ### Added
 
-- Basic interface with input box, output box, submit button
-- Index page and toolselector JavaScript function
-- Five AI tools using OpenAI
-- Essential JavaScript functions including OpenAI messenger
+- .gitignore file.
+
+## [2.0.0] - 2023-05-22 - Major Interface Redesign
+
+### Changed
+
+- Modernized interface with CSS.
+- Optimized JavaScript functions.
+- Enhanced mobile compatibility.
+- Converted output-container to an iframe.
+
+### Added
+
+- New task-tracking memory system.
+- Clipboard feature for AI output.
+
+## [1.0.0] - 2023-04-22 - Initial Release
+
+### Added
+
+- Basic interface with input box, output box, submit button.
+- Index page and toolselector JavaScript function.
+- Five AI tools using OpenAI.
+- Essential JavaScript functions including OpenAI messenger.
