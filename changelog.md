@@ -1,5 +1,36 @@
 ## Changelog
 
+## [2.3.4] - 2023-05-27 - Dev "tempUrlButton" Created
+
+### Added
+
+- Created a button for testing different types of code.
+
+## [2.3.3] - 2023-05-27 - Updated Messaging Process
+
+### Added
+
+- Added the ability to return text from URLs to AI using cors.sh for proxy.
+- Added extensive logging for the messaging process.
+
+## [2.3.2] - 2023-05-27 - Memory Changes
+
+### Added
+
+- Added more console logging for debugging.
+
+### Updated
+
+- Updated miscellaneous memory functions to be more efficient.
+
+## [2.3.1] - 2023-05-27 - Implemented CORS Proxy for Web Lookups
+
+### Added
+
+- Implemented a new function to pull web content through cors.sh.
+- Created a new function, `pullwebsitecontent(url)`, to pull web content through cors.sh.
+- Built `extractURL` function to check the user input for `https://` strings.
+
 ## [2.2.0] - 2023-05-26 - AI Tools Enhancements
 
 ### Added
