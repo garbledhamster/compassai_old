@@ -1,6 +1,6 @@
 ## Changelog
 
-## [2.3.7] - Udpated UI CSS
+## [2.3.7] - Updated UI CSS
 
 ## Changed
 
