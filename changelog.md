@@ -1,5 +1,27 @@
 ## Changelog
 
+## [2.3.7] - Udpated UI CSS
+
+## Changed
+
+- Made the interface look more modern
+- Updated buttons.
+- Removed cancel button to cleanup the input box
+- Made all buttons the same size and circles.
+
+## [2.3.6] - 2023-05-28 - Fixed memories
+
+### Fixed
+
+- Fixed minor bug where Important button wasn't rotating colors propelry.
+
+## [2.3.5] - 2023-05-28 - Moved API keys to secure storage
+
+### Changed
+
+- openai key moved to secure storage
+- corssh key moved to secure storage
+
 ## [2.3.4] - 2023-05-27 - Dev "tempUrlButton" Created
 
 ### Added

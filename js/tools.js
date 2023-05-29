@@ -3,8 +3,6 @@ function selectById(id) {
   return document.getElementById(id);
 }
 var maxTokens = 8192;
-var openaiAPIKey = "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";
-var openaiAPI = "https://api.openai.com/v1/chat/completions";
 var maxRetries = 3;
 var memoriesToPull = 5;
 let textarea = selectById("user-input");
@@ -20,15 +18,16 @@ let aiDomainExpertise;
 let aiTone;
 let aiConfigFile;
 let memoriesDivContainer;
+
 // FUNCTIONS
+
 function appendChatBubble(parent, text, userType) {
-  let currentDate = new Date().toLocaleString();
-  // Configure marked with syntax highlighting
   marked.setOptions({
     highlight: function (code) {
       return hljs.highlightAuto(code).value;
     },
   });
+  let currentDate = new Date().toLocaleString();
   let chatBubbleText = document.createElement("div");
   chatBubbleText.className = "chat-bubble user-message";
   // Use the parse method directly from marked
@@ -41,6 +40,49 @@ function appendChatBubble(parent, text, userType) {
   parent.appendChild(chatBubble);
   parent.scrollTop = parent.scrollHeight;
 }
+
+// Define a map where the key is the user-friendly name and the value is the corresponding URL
+
+async function fetchData(option, parameter) {
+  console.log("FETCHING DATA NOW")
+  const workerUrl = "https://compass-ai.jrice.workers.dev/"
+  const fetchRequest = {
+    option: option,
+    input: parameter
+  };
+
+  // Validate inputs for both options
+  if (!parameter || typeof parameter !== 'string') {
+    throw new Error(`Invalid parameter for '${option}' option. 'parameter' must be a non-empty string.`);
+  }
+
+  // Fetch the data
+  const response = await fetch(workerUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(fetchRequest),
+  });
+
+  // Check for a valid response
+  if (!response.ok) {
+    console.error("Error: " + response.status);
+    throw new Error("Error fetching data from the worker.");
+  }
+
+  // Parse and log the returned data
+  const data = await response.json();
+
+  if (option === 'corssh') {
+    console.log(" - CORSSH DATA RETURNED: " + JSON.stringify(data));
+  } else if (option === 'openai') {
+    console.log(" - OPENAI DATA RETURNED: " + JSON.stringify(data));
+  }
+
+  return data;
+}
+
 async function sendMessageToOpenAI(message, maxTokens) {
   console.log("Sending message to OpenAI - Start");
   if (countTokens(message) >= maxTokens) {
@@ -49,25 +91,15 @@ async function sendMessageToOpenAI(message, maxTokens) {
     );
     return "Max token limit exceeded, reduce your input text and try again...";
   }
-  const requestParams = {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${openaiAPIKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: message }],
-      temperature: 1,
-    }),
-  };
+
   for (let retryCount = 0; retryCount < maxRetries; retryCount++) {
     try {
-      const response = await fetch(openaiAPI, requestParams);
-      const responseData = await response.json();
+      const response = await fetchData('openai',message);
+      console.log(" - API response: " + JSON.stringify(response));
+      const responseData = await response.choices[0].message.content;
       console.log(" - API response received:");
-      console.log(JSON.stringify(responseData, null, 4));
-      return responseData;
+      console.log(responseData);
+      return response;
     } catch (error) {
       console.error(error);
     }
@@ -118,35 +150,10 @@ function generateGUID() {
     return v.toString(16);
   });
 }
-function pullWebsiteContent(url) {
-  const proxyUrl = "https://proxy.cors.sh/";
-  const apiKey =
-    "test_7babbc70c8aa34dbddda875bc2b50a629dd27fb49c71a0c3c3ee56764966a89f";
-  return fetch(proxyUrl + url, {
-    headers: {
-      "x-cors-api-key": apiKey,
-      origin: "https://ourtech.space",
-    },
-  })
-    .then((response) => response.text())
-    .then((html) => {
-      // Parse the HTML string
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, "text/html");
-      // Get all meta tags
-      const metaTags = doc.getElementsByTagName("meta");
-      // Extract content from each meta tag
-      const contentArray = Array.from(metaTags).map((metaTag) =>
-        metaTag.getAttribute("content")
-      );
-      // Combine content into a line-broken string
-      const formattedContent = contentArray.join("\n");
-      return formattedContent;
-    })
-    .catch((error) => {
-      console.error("Error fetching website content: ", error);
-      throw error;
-    });
+async function sendUrlToCorsSh(url) {
+  const response = await fetchData('corssh', url);
+  const textContent = extractText(response);
+  return textContent;
 }
 // STRING OPERATIONS
 function buildMessage(userInput) {
@@ -229,6 +236,20 @@ function extractUrl(string) {
   var match = string.match(pattern);
   return match ? match[0] : null;
 }
+function extractText(htmlString) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlString, 'text/html');
+  const paragraphs = doc.querySelectorAll('p');
+  
+  let extractedText = '';
+  for (const p of paragraphs) {
+    extractedText += p.textContent + '\n';
+  }
+
+  console.log(" - CLEANED UP TEXT: " + extractedText);
+  return extractedText;
+}
+
 // SAVE LOAD FUNCTIONS
 function checkAiConfigFileExists() {
   var configFile = localStorage.getItem(aiConfigFile);
@@ -451,7 +472,9 @@ function createMemoryToolbar(memoryJSON) {
   return memoryToolbar;
 }
 function createImportantButton(important) {
+
   const importantButton = document.createElement("button");
+  importantButton.style.color = important ? "red" : "gray";
   importantButton.innerHTML = "<strong>!</strong>";
   importantButton.textContent = "!";
   importantButton.className = "memory-toolbar-button memory-important-button";
@@ -468,9 +491,8 @@ function createImportantButton(important) {
     const newImportant = !important;
     updateMemoryValue(memoryId, "Important", newImportant, aiConfig);
     important = newImportant;
-    updateButtonStyle();
-    saveAIConfig();
     importantButton.style.color = important ? "red" : "gray";
+    saveAIConfig();
   });
   return importantButton;
 }
@@ -619,11 +641,12 @@ document.addEventListener("DOMContentLoaded", function () {
     if (extractUrl(userInputText)) {
       const url = extractUrl(userInputText);
       console.log(" - URL FOUND: " + url);
-      const content = await pullWebsiteContent(url);
+      const content = await sendUrlToCorsSh(url);
       console.log(" CONTENT RETRIEVED: " + content);
       const message = buildMessage(content, true);
       console.log(" - SENDING CONTENT TO AI: " + url);
       const response = await sendMessageToOpenAI(message, maxTokens);
+      console.log(" - RESPONSE TEST: " + response);
       const responseText = response.choices[0].message.content;
       //const responseText = "URL FOUND: " + url
       appendChatBubble(toolOutputInner, responseText, "ai");
@@ -631,8 +654,11 @@ document.addEventListener("DOMContentLoaded", function () {
       console.log(" - NO URL FOUND:" + userInputText);
       const message = buildMessage(userInputText, true);
       const response = await sendMessageToOpenAI(message, maxTokens);
+      console.log(" - RESPONSE TEST: " + response);
+
       const responseText = response.choices[0].message.content;
       //const responseText = " - NO URL FOUND:" + userInputText;
+      console.log(" - Creating chat bubble for ai response: " + responseText);
       appendChatBubble(toolOutputInner, responseText, "ai");
     }
     userInput.value = "";
@@ -659,9 +685,7 @@ document.addEventListener("DOMContentLoaded", function () {
         let timestamp = new Date().toISOString();
         let tokenLength = countTokens(selectedText);
         let response = await sendMessageToOpenAI(
-          "Take this text and return a title.  Only return the title and nothing else.  Return a title even if it's gibberish.\n" +
-            selectedText +
-            ""
+          "Take this text and return a title.  Only return the title and nothing else.  Return a title even if it's gibberish.\nTEXT TO CREATE A TITLE FOR: '" + selectedText + "'"
         );
         let memoryTitle = response.choices[0].message.content.replace(
           /^[\W_]+|[\W_]+$/g,
@@ -793,27 +817,7 @@ document.addEventListener("DOMContentLoaded", function () {
         arrow.innerHTML = "&#x25B8"; // Change the arrow to point rightwards
       }
     });
-    selectById("tempUrlButton").addEventListener("click", async (e) => {
-      try {
-        const content = await pullWebsiteContent(
-          "https://www.thetimes.co.uk/article/team-johnson-its-a-stitch-up-to-smear-boris-at-its-heart-is-oliver-dowden-qz0b0m8nk"
-        );
-        console.log(content);
-        const message =
-          content +
-          "\nSummarize this text into a summary and keypoints, utput in markdown format.";
-        const response = await sendMessageToOpenAI(message, maxTokens);
-        const responseText = response.choices[0].message.content;
-        appendChatBubble(selectById("tool-output-inner"), responseText, "ai");
-      } catch (error) {
-        console.error(error);
-        appendChatBubble(
-          selectById("tool-output-inner"),
-          "Website failed to fetch.",
-          "ai"
-        );
-      }
-    });
+
   });
   document.addEventListener("click", function (event) {
     var menu = document.getElementById("popoutMenu");
