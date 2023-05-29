@@ -1,41 +1,42 @@
 ## Changelog
 
-## [2.3.7] - Udpated UI CSS
+## [2.3.0] - Updated UI CSS
 
-## Changed
+### Changed
 
 - Made the interface look more modern
 - Updated buttons.
 - Removed cancel button to cleanup the input box
 - Made all buttons the same size and circles.
+- Users may need to clear their cahce.
 
-## [2.3.6] - 2023-05-28 - Fixed memories
+## [2.2.6] - 2023-05-28 - Fixed memories
 
 ### Fixed
 
 - Fixed minor bug where Important button wasn't rotating colors propelry.
 
-## [2.3.5] - 2023-05-28 - Moved API keys to secure storage
+## [2.2.5] - 2023-05-28 - Moved API keys to secure storage
 
 ### Changed
 
 - openai key moved to secure storage
 - corssh key moved to secure storage
 
-## [2.3.4] - 2023-05-27 - Dev "tempUrlButton" Created
+## [2.2.4] - 2023-05-27 - Dev "tempUrlButton" Created
 
 ### Added
 
 - Created a button for testing different types of code.
 
-## [2.3.3] - 2023-05-27 - Updated Messaging Process
+## [2.2.3] - 2023-05-27 - Updated Messaging Process
 
 ### Added
 
 - Added the ability to return text from URLs to AI using cors.sh for proxy.
 - Added extensive logging for the messaging process.
 
-## [2.3.2] - 2023-05-27 - Memory Changes
+## [2.2.2] - 2023-05-27 - Memory Changes
 
 ### Added
 
@@ -45,7 +46,7 @@
 
 - Updated miscellaneous memory functions to be more efficient.
 
-## [2.3.1] - 2023-05-27 - Implemented CORS Proxy for Web Lookups
+## [2.2.1] - 2023-05-27 - Implemented CORS Proxy for Web Lookups
 
 ### Added
 
