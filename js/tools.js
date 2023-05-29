@@ -676,11 +676,13 @@ document.addEventListener("DOMContentLoaded", function () {
         console.log("Text copied to clipboard:", copiedText);
       }
     });
-    selectById("memoryButton").addEventListener("click", async (e) => {
+
+    async function handleMemoryCreation(e) {
       console.log("Creating memory...");
-      memoriesDivContainer = selectById("memories");
       e.preventDefault();
+      const memoriesDivContainer = selectById("memories");
       const selectedText = window.getSelection().toString();
+    
       if (selectedText !== "") {
         let timestamp = new Date().toISOString();
         let tokenLength = countTokens(selectedText);
@@ -692,7 +694,7 @@ document.addEventListener("DOMContentLoaded", function () {
           ""
         );
         let newMemory = createMemory(
-          generateGUID,
+          generateGUID(),
           memoryTitle,
           selectedText,
           false,
@@ -704,7 +706,15 @@ document.addEventListener("DOMContentLoaded", function () {
         memoriesDivContainer.appendChild(newMemory);
         saveAIConfig();
       }
-    });
+    }
+    
+    // Retrieve the button element
+    let memoryButton = selectById("memoryButton");
+    
+    // Attach both click and touchstart events to the button
+    memoryButton.addEventListener('click', handleMemoryCreation);
+    memoryButton.addEventListener('touchend', handleMemoryCreation);
+    
     selectById("clearButton").addEventListener("click", (e) => {
       const overlay = document.createElement("div");
       overlay.style.position = "fixed";
@@ -833,5 +843,12 @@ document.addEventListener("DOMContentLoaded", function () {
     const aiConfigObject = JSON.parse(configString);
     aiConfig = aiConfigObject;
   }
+  Array.from(document.getElementsByClassName('button')).forEach(button => {
+    button.addEventListener('touchend', event => {
+      button.click();
+      // Add any additional touch functionality here
+    });
+  });
+  
   loadMemories();
 });
