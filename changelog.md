@@ -2,7 +2,7 @@
 
 ## [2.3.7] - Updated UI CSS
 
-## Changed
+### Changed
 
 - Made the interface look more modern
 - Updated buttons.
