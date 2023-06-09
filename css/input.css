@@ -1,0 +1,46 @@
+#tool-input {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: center; /* Center content vertically */
+  align-items: center; /* Center content horizontally */
+  background-color: #2f323b;
+  overflow: none;
+  border-top: 2px solid #007bff; /* Modern blue color */
+  border-radius: 0 0 3px 3px;
+  gap: 15px;
+  position: relative;
+  z-index: 1;
+  padding-top: 10px;
+}
+#user-input {
+  border: 0;
+  width: 100%;
+  resize: none;
+  outline: none;
+  line-height: max-content;
+  background-color: transparent;
+  color: white;
+  font-size: 15px;
+}
+
+#submit-button {
+  box-shadow: none;
+}
+#menuButton {
+}
+#cancel-button {
+  box-shadow: none;
+}
+
+#submit-button, #menuButton {
+  min-width: 50px;
+  min-height: 50px;
+}
+
+.button:hover {
+  background-color: #0056b3;
+}
+.button:focus {
+  outline: none;
+}

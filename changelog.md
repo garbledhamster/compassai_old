@@ -1,6 +1,12 @@
 ## Changelog
 
-## [2.3.0] - Updated UI CSS
+## [2.3.1] - 2023-05-29 - Fixed touch event on memory button
+
+### Fixed
+
+- Memory button now works on mobile
+
+## [2.3.0] - 2023-05-28 - Updated UI CSS
 
 ### Changed
 

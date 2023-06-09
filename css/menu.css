@@ -1,0 +1,230 @@
+:root {
+  --primary-color: #2f323b; 
+  --hover-color: #007bff; 
+  --transition-speed: 0.3s;
+  --background-color: #2f323b;
+  --font-family: "Roboto", sans-serif; 
+  --text-icon-color: #ffffff; 
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--background-color);
+}
+
+#menuButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  font-size: 25px;
+  border: none;
+  z-index: 999;
+  cursor: pointer;
+  transition: all var(--transition-speed);
+  color: var(--text-icon-color);
+}
+
+#menu-container {
+  height: 100%;
+  display: none;
+  position: absolute;
+  z-index: 10;
+  bottom: 0;
+  right: 0;
+  width: 400px;
+  top: 0;
+  opacity: 0; 
+  transform: translateY(0%);
+  transition: opacity 0.7s ease-in-out, transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  background-color: var(--primary-color);
+  border: #007bff solid 2px;
+  overflow: hidden;
+}
+
+
+#menu-container.appear {
+  opacity: 1; 
+}
+
+#popoutContainer {
+ height: 100%;
+ width: 100%;
+}
+
+#popoutMenu {
+  width: 100%;
+  background-color: var(--primary-color);
+  height: 100%;
+  position: relative;
+}
+
+#popoutMenuHotBar {
+  background-color: var(--primary-color);
+  height: max-content;
+  display: block;
+  flex-direction: row;
+  height: fit-content;
+  justify-content: center;
+  padding: 10px; 
+  border-bottom: 1px solid #; 
+
+}
+
+.popoutMenuHotBarItem {
+  position: relative;
+  background-color: #4a4f5a;
+}
+
+.popoutMenuHotBarItem:hover:before {
+  transform: translateY(0%);
+}
+
+.popoutMenuHotBarItem:hover {
+  transform: translateY(-1px);
+}
+
+.popoutMenuHotBarItem > * {
+  position: relative;
+  z-index: 2;
+}
+
+#popoutMenuHeader {
+  background-color: #4a4f5a; 
+  align-items: center;
+  text-align: center;
+  display: block;
+  color: var(--text-icon-color); 
+}
+
+#popoutMenuItems {
+  height: 100%;
+  bottom: 100px;
+  min-height: 100px;
+}
+
+#popoutMenuItemButtons,#guides,#tools {
+  display: flex;
+  position: relative;
+  flex-wrap: wrap;
+  width: 100%;
+  flex-grow: 1;
+  height: 100%;
+  overflow-y: auto;
+  align-content: flex-start;  /* add this line */
+  gap: 10px;
+  padding: 10px;
+}
+
+
+.popoutMenuItem {
+  background-color: #4a4f5a;
+  width: 100%;
+  color: var(--text-icon-color);
+  height: max-content;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease;
+  transform: translateZ(0);
+  box-shadow: 0px 0px 4px 2px rgba(0, 0, 0, 0.3);
+  border: none;
+  border-radius: 10px;
+}
+
+
+.popoutMenuItem:before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #007bff;
+  transition: transform .5s ease;
+  transform: translateY(-100%);
+  z-index: 1;
+}
+
+.popoutMenuItem:hover:before {
+  transform: translateY(0%);
+}
+
+.popoutMenuItem:hover {
+  transform: translateY(-1px); 
+}
+
+.popoutMenuItem > * {
+  position: relative;
+  z-index: 2;
+}
+
+#popoutCardContainers, 
+#memoriesContainer, 
+#toolsContainer, 
+#tools, 
+.tool, 
+#conversationsContainer, 
+#settingsContainer {
+  background-color: var(--primary-color);
+  height: 100%;
+}
+
+#guidesContainer,
+#memoriesContainer,
+#toolsContainer,
+#conversationsContainer, 
+#settingsContainer {
+  display: none;
+  height: 100%;
+  width: 100%;
+  background-color: transparent;
+  flex-grow: 1;
+  position: relative;
+  z-index: 1;
+}
+
+#toolsContainer {
+  display: flex;
+  width: 100%;
+}
+
+#tools, #guides {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+}
+
+.tool, .guide {
+  height: max-content;
+  width: 100%;
+  color: white;
+  border-radius: 5px;
+  border: 0;
+  box-shadow: 0px 0px 10px 2px rgba(0, 0, 0, 0.3);
+  background-color: #6c757d;
+}
+
+#menu-container,#popoutContainer, #popoutMenu, #popoutMenuHotBar {
+  border-radius: 8px 8px 0px 0;
+}
+
+@media only screen and (max-width: 767px) {
+  #menu-container {
+    display: none;
+    position: absolute;
+    z-index: 10;
+    bottom: 0; /* This sets the bottom distance to the parent */
+    right: 0;
+    width: 100%;
+    top: 0; /* This will make it expand upwards */
+    border-radius: 8px 8px 0 0;
+    opacity: 0; 
+    transform: translateY(0%); /* Move the menu downward */
+    transition: opacity 0.7s ease-in-out, transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    background-color: var(--primary-color);
+    border: #007bff solid 2px;
+  }
+
+}

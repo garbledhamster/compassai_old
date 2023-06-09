@@ -1,0 +1,43 @@
+.user-message,
+.assistant-message,
+.system-message,
+.error-message {
+  text-align: left;
+  padding: 10px;
+  border-radius: 5px;
+  font-size: 14px;
+  max-width: 66%; /* Limit the width of messages */
+  width: 100%;
+  height: max-content;
+  align-self: center; /* Align to the left */
+  transition: max-width 0.3s; /* Add transition for smooth animation */
+}
+
+.user-message {
+  background-color: cornflowerblue;
+  color: white;
+}
+
+.assistant-message {
+  background-color: lightgrey;
+  color: black;
+}
+
+.system-message {
+  background-color: lightyellow;
+  color: black;
+}
+
+.error-message {
+  background-color: lightcoral;
+  color: white;
+}
+
+@media only screen and (max-width: 767px) {
+  .user-message,
+  .assistant-message,
+  .system-message {
+    max-width: 100%;
+    width: 100%;
+  }
+}
