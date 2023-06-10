@@ -2,7 +2,9 @@ import { chattyConfig } from './tools/chatty.js';
 import { summarizerConfig } from './tools/summarizer.js';
 import { articulatorConfig } from './tools/articulator.js';
 import { chickenConfig } from './tools/chicken.js';
-import { guideOverlayContainer, guideOverlayContent, guideImageContainer, guideCloseButton } from '/js/react.js';
+import { guideOverlayContainer, guideOverlayContent, guideImageContainer, guideCloseButton } from '/js/react/guide.js';
+import { isMemoryDuplicate, newMemory } from '/js/memories.js';
+import { generateGUID, countTokens, trimMessage, extractUrl, extractText, chunkText, SummarizeChunksOpenAI } from '/js/general.js';
 
 // AI CONFIG CONTROLS
 
@@ -69,9 +71,11 @@ function getObjectAiConfig(keyName, lookup = null) {
 
   return searchObject(obj, keyName, lookup);
 }
+
 function selectById(id) {
   return document.getElementById(id);
 }
+
 
 // VARIABLES
 
@@ -98,6 +102,7 @@ let conversationsHTML;
 let settingsHTML;
 let toolsHTML;
 let currentConversationID;
+
 // ASYNC FUNCTIONS
 
 async function fetchData(jsonObjectBody, isStream = false) {
@@ -191,9 +196,21 @@ async function fetchCloudFlareMessage(message) {
 
   try {
     let chatHistory = await getConversationHistory(5);
+   
+  
+    
+   
     let instructions = await getImportantMemories();
-    console.log(JSON.stringify(instructions));
+    console.log(" - INSTRUCTIONS: " + JSON.stringify(instructions));
+    await instructions.forEach(instruction => {
+      createSystemMessage(instruction.content);
+      });
+
     console.log(' - CHAT HISTORY BEFORE NEW MESSAGE: ' + JSON.stringify(chatHistory));
+
+
+
+
     const openaiBody = {
       option: 'openai',
       openaiRequestBody: JSON.stringify({
@@ -272,431 +289,6 @@ async function fetchCloudFlareMessage(message) {
   } catch (error) {
     console.error(error);
   }
-}
-
-// async function fetchData(jsonObjectBody) {
-//     console.log("FETCHING FROM CLOUDFLARE WORKER NOW");
-//     console.log(" - JSON OBJECT BODY: " + JSON.stringify(jsonObjectBody));
-//     try {
-//         const workerUrl = "https://compass.jrice.workers.dev/";
-//         const response = await fetch(workerUrl, {
-//             method: "POST",
-//             headers: {
-//                 "Content-Type": "application/json",
-//             },
-//             body: JSON.stringify(jsonObjectBody),
-//         });
-
-//         if (!response.ok) {
-//             createErrorBubble("An error occured during corssh web lookup:<br><br>" + response.status);
-//             console.error("Error: " + response.status);
-//             throw new Error("Error fetching data from the worker.");
-//         }
-//         const data = await response.json();
-//         console.log(" - DATA: " + JSON.stringify(data));
-//         return data;
-//     } catch (error) {
-//         createSystemBubble("An error occured while fetching data from CloudFlare. Here's the error message.");
-//         createErrorBubble(error);
-//         return null;
-//     }
-
-// }
-/*async function sendMessageToOpenAI(message, maxTokens) {
-  console.log("Sending message to OpenAI - Start");
-  if (countTokens(message) >= maxTokens) {
-    console.log(" - Max token limit exceeded, reduce your input text and try again...");
-    return "Max token limit exceeded, reduce your input text and try again...";
-  }
-
-    const requestParams = {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${openaiAPIKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: message }],
-      temperature: 1,
-    }),
-  };
-
-  for (let retryCount = 0; retryCount < maxRetries; retryCount++) {
-    try {
-      //const response = await fetchData("openai", requestParams);
-      
-      console.log(" - API response: " + JSON.stringify(response));
-      const responseData = await response.choices[0].message.content;
-      console.log(" - API response received:");
-      console.log(responseData);
-      return response;
-    } catch (error) {
-      console.error(error);
-    }
-  }
-  console.log(" - Exceeded maximum number of retries.");
-  return "Exceeded maximum number of retries.";
-}*/
-
-// async function sendMessageToOpenAI(message) {
-//     if (!openaiAPIKey) {
-//         console.error("OpenAI API Key is missing!");
-//         return;
-//     }
-//     message = message.message;
-
-//     createUserBubble(message.content);
-
-//     const currentDate = new Date().toLocaleString();
-//     const assistantMessage = { id: generateGUID(), role: "assistant", timestamp: currentDate, ignore: false, tokens: 0, content: "" };
-//     const assistantBubble = buildChatBubble(assistantMessage);
-//     assistantBubble.style.display = "none";
-//     parent.prepend(assistantBubble);
-
-//     const contentChunks = chunkText(message.content, 4000);
-//     console.log(" - CONTENT CHUNKS: " + JSON.stringify(contentChunks));
-//     const SummarizedChunks = await SummarizeChunksOpenAI(contentChunks, openaiAPIKey); // ensure to await the promise here
-//     console.log(" - SUMMARIZED CHUNKS: " + JSON.stringify(SummarizedChunks));
-
-//     const requestParams = {
-//         method: "POST",
-//         headers: { Authorization: `Bearer ${openaiAPIKey}`, "Content-Type": "application/json" },
-//         body: JSON.stringify({ model: "gpt-3.5-turbo", messages: [{ role: "system", content: SummarizedChunks }], temperature: 1, stream: true }),
-//     };
-//     // rest of your code
-
-//     console.log(" - REQUEST PARAMS: " + JSON.stringify(requestParams));
-
-//     try {
-//         const response = await fetch("https://api.openai.com/v1/chat/completions", requestParams);
-
-//         const reader = response.body.getReader();
-//         const decoder = new TextDecoder("utf-8");
-
-//         return new Promise((resolve, reject) => {
-//             let isFirstLine = true; // Flag to skip the first line
-//             reader.read().then(function processText({ done, value }) {
-//                 let assistantContent = "";
-//                 const text = decoder.decode(value);
-//                 const lines = text.split("\n");
-//                 if (lines.length > 0) {
-//                     assistantBubble.style.display = "";
-//                 }
-//                 for (const line of lines) {
-//                     //console.log(" - LINE: " + JSON.stringify(line));
-//                     if (isFirstLine) {
-//                         isFirstLine = false;
-//                         continue; // Skip the first line starting with "data: "
-//                     }
-//                     if (line.startsWith("data: ")) {
-//                         const json = line.slice(6);
-//                         if (json === "[DONE]") {
-//                             console.log("Received [DONE] - ending stream.");
-//                             return resolve();
-//                         }
-//                         let chunk;
-//                         try {
-//                             chunk = JSON.parse(json);
-//                         } catch (e) {
-//                             console.error("Invalid JSON: ", json, " Error: ", e);
-//                             continue;
-//                         }
-//                         if (chunk.choices && chunk.choices[0] && chunk.choices[0].delta) {
-//                             const delta = chunk.choices[0].delta;
-//                             if (delta.content) {
-//                                 assistantContent += delta.content;
-//                                 assistantMessage.tokens = countTokens(assistantContent);
-//                                 // Replace '\n' with '<br>' for HTML display
-//                                 assistantBubble.chatBubbleText.innerHTML += assistantContent.replace(/\n/g, "<br>");
-//                                 parent.scrollTop = parent.scrollHeight;
-//                             }
-//                         }
-//                     }
-//                 }
-//                 return reader.read().then(processText);
-//             });
-//         });
-//     } catch (error) {
-//         console.error("Error in sendMessageToOpenAI:", error);
-//     }
-// }
-// async function fetchCloudFlareMessage(message) {
-//     console.log("FETCHING DATA FROM CLOUDFLARE");
-//     if (!message.content) {
-//         return null;
-//     }
-
-//     createUserBubble(message.content);
-
-//     const parent = selectById("tool-output-inner");
-//     const url = extractUrl(message.content);
-
-//     if (url) {
-//         createSystemBubble("Url found. Fetching website data now.");
-//         userBubble.chatBubbleText.innerHTML = message.content;
-//         parent.prepend(userBubble);
-//         try {
-//             const corsshBody = {
-//                 option: "corssh",
-//                 corsshRequestBody: url,
-//             };
-//             const webdata = await fetchData(corsshBody);
-//             if (await webdata) {
-//                 createSystemBubble("I managed to retrieve the website data.  Here's what I was able to pull.  I didn't verify the content, so it may be gibberish.");
-//                 createSystemBubble(JSON.stringify(webdata));
-//                 createSystemBubble("I'm sending the website data to get processed now.  It may take a while.");
-//             }
-//         } catch {
-//             createSystemBubble("Uh oh, getting to the website was harder than I thought.  Try removing the link from your message or try again later.");
-//         }
-//     }
-
-//     const currentDate = new Date().toLocaleString();
-//     const assistantMessage = { id: generateGUID(), role: "assistant", timestamp: currentDate, ignore: false, tokens: 0, content: "" };
-//     const assistantBubble = buildChatBubble(assistantMessage);
-//     assistantBubble.style.display = "none";
-//     parent.prepend(assistantBubble);
-
-//     const messageToOpenAI = "";
-//     console.log(" - MESSAGE CONTENT: " + message.content);
-//     if (countTokens(message.content) > 4000) {
-//         const contentChunks = chunkText(message.content, 4000, 3);
-//         console.log(" - CONTENT CHUNKS: " + JSON.stringify(contentChunks));
-//         const SummarizedChunks = await SummarizeChunksOpenAI(contentChunks, openaiAPIKey); // ensure to await the promise here
-//         console.log(" - SUMMARIZED CHUNKS: " + JSON.stringify(SummarizedChunks));
-//         messageToOpenAI = SummarizedChunks;
-//     } else {
-//         console.log(" - TOKENS: " + countTokens(message.content));
-//     }
-
-//     try {
-//         const openaiBody = {
-//             "option": "openai",
-//             "openaiRequestBody": '{"model":"gpt-3.5-turbo","messages":[{"role":"user","content":"TEST"}],"temperature":1,"stream":true}',
-//         };
-//         console.log(openaiBody);
-//         const response = await fetchData(openaiBody);
-//         console.log(" - RESPONSE FROM CLOUDFLARE/OPENAI: " + response);
-//         const reader = response.body.getReader();
-//         const decoder = new TextDecoder("utf-8");
-
-//         return new Promise((resolve, reject) => {
-//             let isFirstLine = true;
-//             reader.read().then(function processText({ done, value }) {
-//                 let assistantContent = "";
-//                 const text = decoder.decode(value);
-//                 const lines = text.split("\n");
-//                 if (lines.length > 0) {
-//                     assistantBubble.style.display = "";
-//                 }
-//                 for (const line of lines) {
-//                     console.log(" - LINE: " + JSON.stringify(line));
-//                     if (isFirstLine) {
-//                         isFirstLine = false;
-//                         continue;
-//                     }
-//                     if (line.startsWith("data: ")) {
-//                         const json = line.slice(6);
-//                         if (json === "[DONE]") {
-//                             console.log("Received [DONE] - ending stream.");
-//                             return resolve();
-//                         }
-//                         let chunk;
-//                         try {
-//                             chunk = JSON.parse(json);
-//                         } catch (e) {
-//                             console.error("Invalid JSON: ", json, " Error: ", e);
-//                             continue;
-//                         }
-//                         if (chunk.choices && chunk.choices[0] && chunk.choices[0].delta) {
-//                             const delta = chunk.choices[0].delta;
-//                             console.log(" - DELTA: " + delta);
-//                             if (delta.content) {
-//                                 assistantContent += delta.content;
-//                                 assistantMessage.tokens = countTokens(assistantContent);
-//                                 assistantBubble.chatBubbleText.innerHTML += assistantContent.replace(/\n/g, "<br>");
-//                                 parent.scrollTop = parent.scrollHeight;
-//                             }
-//                         }
-//                     }
-//                 }
-//                 return reader.read().then(processText);
-//             });
-//         });
-//     } catch (error) {
-//         console.error(error);
-//     }
-// }
-
-// MISC FUNCTIONS
-
-function countTokens(inputString) {
-  try {
-    console.log(`COUNTING TOKENS NOW - ${new Date().toISOString()}`);
-
-    if (typeof inputString !== 'string') {
-      let inputType = typeof inputString;
-      let inputText = '';
-
-      if (inputType === 'object') {
-        if (Array.isArray(inputString)) {
-          inputType = 'array';
-          inputText = inputString.join(' ');
-        } else if (inputString !== null) {
-          if (inputString.toString() !== '[object Object]') {
-            inputText = inputString.toString();
-          } else {
-            inputText = JSON.stringify(inputString);
-          }
-        }
-      } else if (inputType === 'number' || inputType === 'boolean') {
-        inputText = inputString.toString();
-      }
-
-      console.log(` - INPUT TYPE: ${inputType}`);
-      console.log(` - EXTRACTED TEXT: ${inputText}`);
-
-      createErrorBubble(`An error occured while counting the tokens for the string. Try again later. Input was of type ${inputType}. Extracted text: ${inputText}`);
-      throw new Error(`Input must be a string. Received: ${inputType}. Extracted text: ${inputText}`);
-    }
-
-    //console.log(" - INPUTSTRING: " + inputString);
-    return inputString.split(' ').reduce((tokenCount, token) => tokenCount + (token.trim() ? Math.ceil(token.length / 4) : 0), 0);
-  } catch (error) {
-    console.error(`Error in countTokens: ${error.message}`);
-    return 0; // default return value
-  }
-}
-function getMemoryContent() {
-  let memories = loadMemories();
-  let memoryContent = '';
-  for (let i = 0; i < memories.length; i++) {
-    let memoryJSON = memories[i].Memory;
-    console.log(memoryJSON);
-    let memoryText = memoryJSON['memory-text'];
-    let memoryImportance = memoryJSON['important'];
-    let memoryTokenLength = memoryJSON['token-length'];
-    let memoryTimeStamp = memoryJSON['timestamp'];
-    if (memoryImportance === true) {
-      memoryContent += "'" + memoryText + "'" + '\n';
-    }
-  }
-  if (memoryContent === '') {
-    return ''; // return an empty string instead of undefined
-  } else {
-    console.log(' - Memory Content: ' + memoryContent);
-    return memoryContent;
-  }
-}
-function generateGUID() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    var r = (Math.random() * 16) | 0,
-      v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
-
-// STRING OPERATIONS
-
-function trimMessage(message, maxTokens) {
-  if (typeof message !== 'string' || typeof maxTokens !== 'number') {
-    throw new Error('Input types: Message should be a string, maxTokens should be a number');
-  }
-  let tokenCount = 0;
-  return message
-    .split(' ')
-    .filter((token) => {
-      if (tokenCount + Math.ceil(token.length / 4) <= maxTokens) {
-        tokenCount += Math.ceil(token.length / 4);
-        return true;
-      }
-      return false;
-    })
-    .join(' ');
-}
-function extractUrl(string) {
-  var pattern = /(https?:\/\/(?:[-\w.]|(?:%[\da-fA-F]{2}))+.*)/i;
-  var match = string.match(pattern);
-  return match ? match[0] : null;
-}
-function extractText(htmlString) {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(htmlString, 'text/html');
-  const paragraphs = doc.querySelectorAll('p');
-  let extractedText = '';
-  for (const p of paragraphs) {
-    extractedText += p.textContent + '\n';
-  }
-  console.log(' - CLEANED UP TEXT: ' + extractedText);
-  return extractedText;
-}
-function chunkText(text, chunkTokenLimit = 1000, chunkNumberLimit = 5) {
-  // Average characters per token (for English)
-  const charsPerToken = 4; // From OpenAI documentation
-
-  // Characters limit per chunk
-  const charsLimit = charsPerToken * chunkTokenLimit;
-
-  const words = text.split(' ');
-  let chunks = [];
-  let currentChunk = [];
-  let currentChunkChars = 0;
-  let startIndex = 0;
-  let endIndex = 0;
-
-  for (const word of words) {
-    // If the chunk number limit has been reached, break the loop
-    if (chunks.length === chunkNumberLimit) {
-      console.log(`Chunk number limit of ${chunkNumberLimit} reached, stopping chunking.`);
-      break;
-    }
-
-    if (currentChunkChars + word.length <= charsLimit) {
-      currentChunk.push(word);
-      currentChunkChars += word.length;
-    } else {
-      // Add the current chunk to the list of chunks with additional information
-      chunks.push({
-        text: currentChunk.join(' '),
-        tokens: Math.round(currentChunkChars / charsPerToken),
-        startIndex: startIndex,
-        endIndex: endIndex - 1, // Subtract 1 because we don't want to include the first word of the next chunk
-      });
-
-      // Start a new chunk with the current word
-      currentChunk = [word];
-      currentChunkChars = word.length;
-      startIndex = endIndex + 1; // +1 to not include the first space of the current word
-    }
-    endIndex += word.length + 1; // +1 to account for space
-  }
-
-  // Add the last chunk if it's non-empty and we haven't reached the chunk limit
-  if (currentChunkChars > 0 && chunks.length < chunkNumberLimit) {
-    chunks.push({
-      text: currentChunk.join(' '),
-      tokens: Math.round(currentChunkChars / charsPerToken),
-      startIndex: startIndex,
-      endIndex: endIndex,
-    });
-  } else {
-    const systemMessageText = 'You have maxed out your chunk settings, max tokens per chunk: ' + chunkTokenLimit + ', max chunk limit: ' + chunkNumberLimit + '.';
-    systemMessage = {
-      message: {
-        id: generateGUID,
-        role: 'system',
-        timestamp: currentDate,
-        ignore: false,
-        tokens: countTokens(systemMessageText),
-        content: systemMessageText,
-      },
-    };
-    buildChatBubble(systemMessage);
-  }
-
-  // Return chunks as JSON object
-  return { chunks };
 }
 
 // CONVERSATION AND MESSAGING FUNCTIONS
@@ -822,7 +414,7 @@ function createConsoleBubble(message) {
   parent.prepend(
     buildChatBubble({
       id: generateGUID(),
-      role: 'app',
+      role: 'console',
       timestamp: currentDate,
       ignore: true,
       tokens: countTokens(message),
@@ -877,31 +469,6 @@ function createAssistantBubble(message) {
 
 // MEMORY FUNCTIONS
 
-function isMemoryDuplicate(memory) {
-  console.log('CHECKING IF MEMORY IS A DUPLICATE');
-  console.log(' - MEMORY: ' + JSON.stringify(memory));
-
-  let memoryContent = memory.content.trim().toLowerCase();
-  memoryContent = memoryContent.replace(/(<([^>]+)>)/gi, ''); // Remove HTML tags
-
-  const memoriesContainer = document.getElementById('memoriesContainer');
-  const memories = memoriesContainer.getElementsByClassName('memory-container');
-
-  console.log(' - MEMORY COUNT: ' + (memories.length + 1));
-  for (let i = 0; i < memories.length; i++) {
-    let contentElement = memories[i].querySelector('.memory-content').innerText.trim().toLowerCase();
-    console.log(' - MEMORY CONTENT: ' + memoryContent);
-    console.log(' - CONTENT ELEMENT: ' + contentElement);
-
-    if (memoryContent === contentElement) {
-      console.log(' - Duplicate found, returning true.');
-      return true;
-    }
-  }
-
-  console.log(' - Duplicate not found, returning false.');
-  return false;
-}
 function loadMemories() {
   console.log('LOADING MEMORIES NOW...');
   console.log(' - AI CONFIG: ' + JSON.stringify(aiConfig));
@@ -921,20 +488,6 @@ function loadMemories() {
       appendMemoryBubble(memory);
     });
   }
-}
-function newMemory(text) {
-  const memory = {
-    id: generateGUID(),
-    icon: '&#x1F9E0;',
-    title: 'TITLE',
-    content: text,
-    important: false,
-    tokens: countTokens(text),
-    timestamp: null,
-  };
-
-  appendMemoryBubble(memory);
-  return memory;
 }
 function appendMemoryBubble(memory) {
   console.log('APPENDING MEMORY BUBBLE NOW...');
@@ -1051,12 +604,12 @@ function handleDeleteButtonClick(memory, memoryDeleteButton) {
 }
 async function getImportantMemories(limit = null) {
   console.log('GETTING IMPORTANT MEMORIES');
-  
+
   let memories = getObjectAiConfig('memories');
-  
+
   // Filter out the important memories
-  let importantMemories = memories.filter(memory => memory.important === true);
-  
+  let importantMemories = memories.filter((memory) => memory.important === true);
+
   let memoryMessages = [];
 
   importantMemories.forEach((memory) => {
@@ -1075,17 +628,6 @@ async function getImportantMemories(limit = null) {
   return memoryMessages;
 }
 
-
-// DOCUMENT FUNCTIONS
-
-// Define global variables to store the HTML contents
-
-async function fetchHTML(htmlFileRelativePath, variableName) {
-  window[variableName] = await getHtmlFileContent(htmlFileRelativePath);
-  console.log;
-}
-
-// function handleDrag(event, ui, menuContainer, popoutMenu, parent) {
 //   // Store initial display state
 
 //   var rightEdge = ui.position.left + menuContainer.outerWidth() + popoutMenu.outerWidth() > parent.outerWidth();
@@ -1525,8 +1067,7 @@ async function handleGuideGettingStarted() {
   const overlayJSON = {
     title: 'Getting started with Compass AI',
     image: 'assets/guides/Getting Started.gif',
-    description:
-      'To get started, simply enter a message in the chat to start a conversation.',
+    description: 'To get started, simply enter a message in the chat to start a conversation.',
     altText: '1. Open the menu.\n2. Click the reset icon (which looks like a circular arrow).\n3. A confirmation overlay will show. Click "Yes" to clear the app settings.',
   };
 
@@ -1543,7 +1084,6 @@ async function handlePopoutMenuItemLoading() {
 }
 
 // REACT
-
 
 function guideShowOverlay(jsonHelpBody, parentOfHelpButton) {
   const mainWrapper = document.getElementById('main-wrapper');
@@ -1584,19 +1124,19 @@ function guideShowOverlay(jsonHelpBody, parentOfHelpButton) {
             src: jsonHelpBody.image,
             alt: marked.parse(jsonHelpBody.altText),
             style: {
-                border: "2px black solid",
-                width: "100%",
-                height: 'auto',  // Keep the aspect ratio
-                maxWidth: '600px',
-                maxHeight: '600px', // Ensure it's not taller than the viewport
-                borderRadius: '10px',
+              border: '2px black solid',
+              width: '100%',
+              height: 'auto', // Keep the aspect ratio
+              maxWidth: '600px',
+              maxHeight: '600px', // Ensure it's not taller than the viewport
+              borderRadius: '10px',
             },
             onError: (e) => {
               e.target.style.display = 'none';
               document.querySelector('.alt-text-container').style.display = 'block';
             },
-        }),
-        
+          }),
+
           React.createElement('div', {
             className: 'alt-text-container',
             dangerouslySetInnerHTML: { __html: marked.parse(jsonHelpBody.altText) },
@@ -1633,7 +1173,6 @@ function guideShowOverlay(jsonHelpBody, parentOfHelpButton) {
     '?',
   );
 
-  // If parentOfHelpButton is defined, render the button. Otherwise, show the overlay directly.
   if (parentOfHelpButton) {
     const helpButtonParent = document.getElementById(parentOfHelpButton);
     const buttonContainer = document.createElement('div');
@@ -1664,115 +1203,6 @@ async function handleCloseMenuItem() {
 
 async function TestButton() {}
 
-// async function getFirstId(htmlFileRelativePath) {
-//     // Retrieve the HTML content
-//     const htmlContent = await getHtmlFileContent(htmlFileRelativePath);
-
-//     // Find the first ID in the HTML content
-//     const firstIdMatch = htmlContent.match(/id="([^"]+)"/);
-//     if (firstIdMatch && firstIdMatch[1]) {
-//         return firstIdMatch[1];
-//     }
-
-//     return null; // No ID found
-// }
-// async function buildContainerCard(htmlFileRelativePath) {
-//     let cardOverlay = document.createElement("div");
-//     cardOverlay.className = "card-overlay";
-//     let htmlContent = await getHtmlFileContent(htmlFileRelativePath);
-//     cardOverlay.innerHTML = htmlContent;
-//     const firstIdMatch = htmlContent.match(/id="([^"]+)"/);
-//     if (firstIdMatch && firstIdMatch[1]) {
-//         const firstId = firstIdMatch[1];
-//         cardOverlay.id = `${firstId}-card`;
-//     }
-//     let footer = document.createElement("div");
-//     footer.className = "card-footer";
-//     let closeButton = document.createElement("button");
-//     closeButton.className = "close-button";
-//     closeButton.innerHTML = "&times;";
-//     closeButton.addEventListener("click", function () {
-//         const container = document.getElementById("popoutMenuItems");
-//         for (let sibling of container.children) {
-//             if (sibling.id.endsWith("-card")) {
-//                 sibling.style.display = "none";
-//             } else if (sibling !== cardOverlay) {
-//                 sibling.style.display = "flex";
-//             }
-//         }
-//         cardOverlay.style.display = "none";
-//     });
-//     footer.appendChild(closeButton);
-//     cardOverlay.appendChild(footer);
-//     console.log(cardOverlay.innerHTML);
-//     return cardOverlay;
-// }
-// async function getHtmlFileContent(htmlFileRelativePath) {
-//     try {
-//         const response = await fetch(htmlFileRelativePath);
-//         if (!response.ok) {
-//             throw new Error(`HTTP error! status: ${response.status}`);
-//         } else {
-//             const htmlContent = await response.text();
-//             return htmlContent;
-//         }
-//     } catch (error) {
-//         console.error(`Failed to fetch HTML content: ${error}`);
-//         return "";
-//     }
-// }
-// // async function fetchMenuHTML() {
-// //   try {
-// //     console.log("FETCHING MENU NOW...");
-// //     const response = await fetch("html/menu.html");
-// //     const data = await response.text();
-
-// //     let dataWithClass = '<div class="hidden">' + data + "</div>";
-
-// //     const menuContainer = document.getElementById("menu-container");
-// //     menuContainer.insertAdjacentHTML("afterbegin", dataWithClass);
-
-// //     const menuLoadedEvent = new CustomEvent("menuLoaded");
-// //     document.dispatchEvent(menuLoadedEvent);
-// //   } catch (error) {
-// //     console.error(" - Error fetching menu:", error);
-// //   }
-// // }
-
-// // const chunkLimitReachedMessage = "Chunk limit of ${chunkLimit} reached, stopping summarization.";
-// // let message = {
-// //     message: {
-// //         id: generateGUID,
-// //         role: "system",
-// //         timestamp: currentDate,
-// //         ignore: false,
-// //         tokens: countTokens(chunkLimitReachedMessage),
-// //         content: chunkLimitReachedMessage,
-// //     },
-// // };
-async function SummarizeChunksOpenAI(ChunksToSummarize) {
-  let json_array_responses = '';
-  console.log('SUMMARIZING TEXT CHUNKS NOW');
-  console.log(' - CHUNKS TO SUMMARIZE: ' + JSON.stringify(ChunksToSummarize));
-  let chunkHistory = [{ role: 'system', content: 'Summarizing chunked text, retaining as much critical detail from each chunk as possible.' }];
-  for (let chunk of ChunksToSummarize.chunks) {
-    let chunkText = chunk.text;
-    console.log(' - CURRENT CHUNK: ' + chunkText);
-    let chunkTextBody = { role: 'system', content: chunkText };
-    let message = {
-      id: generateGUID(),
-      role: 'user',
-      timestamp: currentDate,
-      ignore: false,
-      tokens: countTokens(chunkText),
-      content: chunkText,
-    };
-    const response = await fetchCloudFlareMessage(message);
-
-    chunkHistory.push(response);
-  }
-  return chunkHistory;
-}
 
 // PRE LOAD CONFIGURATIONS
 
@@ -1851,6 +1281,8 @@ async function checkAndLoadAiConfig() {}
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log('COMPASS AI DOCUMENT LOADED...');
+  //console.log = function () {};
+  console.warn = function () {};
 
   // Set Initial Variables
 
@@ -1878,3 +1310,4 @@ document.addEventListener('DOMContentLoaded', () => {
   // Check if AI config file exists
   loadAIConfig();
 });
+

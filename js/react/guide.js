@@ -14,25 +14,21 @@ export const guideOverlayContainer = styled.div`
 `;
 
 export const guideOverlayContent = styled.div`
-width: max-content;
-height: max-content;
-
-display: flex;
-flex-direction: column;
-background-color: rgba(74, 79, 90, 1);
-color: white;
-padding: 10px;
-border-radius: 10px;
-display: flex;
-justify-content: center;
-align-items: center;
-margin-bottom: 50px;
-
+  width: max-content;
+  height: max-content;
+  display: flex;
+  flex-direction: column;
+  background-color: rgba(74, 79, 90, 1);
+  color: white;
+  padding: 10px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 50px;
 `;
 
-export const guideImageContainer = styled.div`
-
-`;
+export const guideImageContainer = styled.div``;
 
 export const guideCloseButton = styled.button`
   classname: button;
@@ -50,6 +46,7 @@ export const guideCloseButton = styled.button`
   width: 30px;
   text-align: center;
   display: flex;
-  justify-content: center; 
+  justify-content: center;
   align-items: center;
 `;
+

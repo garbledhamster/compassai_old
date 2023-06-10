@@ -77,6 +77,8 @@
                         </div>
                       </div>
                       <div id="memoriesContainer"></div>
+                      <div id="instructionsContainer"></div>
+                      <div id="notesContainer"></div>
                       <div id="conversationsContainer">
                         <div id="conversations"></div>
                       </div>
@@ -151,6 +153,14 @@
                         <div class="popoutMenuItemIcon"><i data-feather="book"></i></div>
                         <div class="popoutMenuItemText">Memories</div>
                       </button>
+                      <button class="popoutMenuItem" id="popoutMenuItemInstructions">
+                        <div class="popoutMenuItemIcon"><i data-feather="terminal"></i></div>
+                        <div class="popoutMenuItemText">Instructions</div>
+                      </button>
+                      <button class="popoutMenuItem" id="popoutMenuItemNotes">
+                        <div class="popoutMenuItemIcon"><i data-feather="book-open"></i></div>
+                        <div class="popoutMenuItemText">Notes</div>
+                      </button>
                       <button class="popoutMenuItem" id="popoutMenuItemTools">
                         <div class="popoutMenuItemIcon"><i data-feather="tool"></i></div>
                         <div class="popoutMenuItemText">Tools</div>
@@ -201,7 +211,6 @@
 
       <!-- Internal Scripts -->
       <script src="js/overlay.js" type="module"></script>
-      <script src="js/tools/chatty.js" type="module"></script>
       <script src="js/tools.js" type="module"></script>
       <script>
         feather.replace();
