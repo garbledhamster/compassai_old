@@ -1,50 +1,47 @@
-
 :root {
-    --primary-color: #4a4a4a; 
-    --hover-color: #007bff; 
-    --transition-speed: 0.3s;
-    --background-color: #2f323b;
-    --font-family: "Roboto", sans-serif; 
-    --text-icon-color: #ffffff; 
+  --background-color: #2f323b;
+  --primary-color: #4a4a4a;
+  --secondary-color: #6b7287;
+  --tertiary-color: #a7b2d3;
+  --transition-speed: 0.3s;
 }
+
 #main-wrapper {
-    display: flex;
-    align-items: stretch;
-    flex-direction: column;
-    align-items: center;
-    align-content: center;
-    justify-content: center;
-    font-family: Tahoma, Verdana, sans-serif;
-    height: 100%;
-    width: 100%;
-    box-sizing: border-box;
-    position: fixed;
+  font-family: Tahoma, Verdana, sans-serif;
+  height: 100vh;
+  width: 100%;
+  min-width: 400;
 }
 #tool-wrapper {
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: 100%;
-    padding: 25px;
-    align-items: center;
-    overflow: auto;
-    background-color: #2f323b;
+  width: 100%;
+  height: 100%;
+  padding-left: 10px;
+  padding-right: 10px;
+  background-color: var(--background-color);
 }
 #tool {
-    display: flex;
-    flex-direction: column;
-    overflow: auto;
-    flex-grow: stretch;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-    width: 100%;
-    background-color: #2f323b;
-    overflow: hidden;
-    position: relative;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
-#htmlToolsWrapper {
+#tool-output {
+  height: 100%;
+  width: 100%;
+  overflow-y: auto;
+}
+#tool-input {
+	display: flex;
+	gap: 7px;
+  width: 100%;
+	min-height: 80px;
+  max-height: 50%;
+  height: max-content;
+  border-top: 3px solid #007bff;
+  padding: 10px;
+
+}
+/* #htmlToolsWrapper {
     display: flex;
     flex-grow: 1;
     flex-direction: column;
@@ -63,15 +60,15 @@
     transition: all var(--transition-speed);
 }
 .menuItemToolContainer:hover {
-    background-color: var(--hover-color);
+    background-color: var(--secondary-color);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 .menuItemToolIcon {
-    flex: 0 0 36px; /* updated size */
+    flex: 0 0 36px;
     margin-right: 10px;
-    font-size: 24px; /* new addition if using font-icons */
+    font-size: 24px;
 }
 .menuItemToolTitle {
     flex-grow: 1;
-    font-size: 1.5rem; /* updated size */
-}
+    font-size: 1.5rem
+} */
