@@ -1,21 +1,24 @@
 const { React, ReactDOM } = window;
 
-
+function isMobileScreen() {
+	return window.innerWidth <= 1000; // Adjust the threshold as needed
+}
+// isMobileScreen() ? 'flex-start' : 'center',
 const ComingSoonOverlay = () => {
   const overlayStyle = {
     display: 'flex',
     position: 'absolute',
-    height: 'calc(100% - 80px)',
+    height: '100%',
     width: '100%',
-    bottom: '0px',
-    right: '0px',
+    zIndex: '999',
+    left: "0",
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.5)', /* Opaque white background */
   };
 
   const textStyles = {
-    fontSize: '24px',
+    fontSize: '18px',
     color: '#000',
     textAlign: 'center',
   };

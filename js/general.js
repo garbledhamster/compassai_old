@@ -5,65 +5,70 @@ export function generateGUID() {
     return v.toString(16);
   });
 }
-export function countTokens(inputString) {
-  try {
-    console.log(`COUNTING TOKENS NOW - ${new Date().toISOString()}`);
+// export function countTokens(inputString) {
+//   try {
+//     console.log(`COUNTING TOKENS NOW - ${new Date().toISOString()}`);
 
-    if (typeof inputString !== 'string') {
-      let inputType = typeof inputString;
-      let inputText = '';
+//     if (typeof inputString !== 'string') {
+//       let inputType = typeof inputString;
+//       let inputText = '';
 
-      if (inputType === 'object') {
-        if (Array.isArray(inputString)) {
-          inputType = 'array';
-          inputText = inputString.join(' ');
-        } else if (inputString !== null) {
-          if (inputString.toString() !== '[object Object]') {
-            inputText = inputString.toString();
-          } else {
-            inputText = JSON.stringify(inputString);
-          }
-        }
-      } else if (inputType === 'number' || inputType === 'boolean') {
-        inputText = inputString.toString();
-      }
+//       if (inputType === 'object') {
+//         if (Array.isArray(inputString)) {
+//           inputType = 'array';
+//           inputText = inputString.join(' ');
+//         } else if (inputString !== null) {
+//           if (inputString.toString() !== '[object Object]') {
+//             inputText = inputString.toString();
+//           } else {
+//             inputText = JSON.stringify(inputString);
+//           }
+//         }
+//       } else if (inputType === 'number' || inputType === 'boolean') {
+//         inputText = inputString.toString();
+//       }
 
-      console.log(` - INPUT TYPE: ${inputType}`);
-      console.log(` - EXTRACTED TEXT: ${inputText}`);
+//       console.log(` - INPUT TYPE: ${inputType}`);
+//       console.log(` - EXTRACTED TEXT: ${inputText}`);
 
-      createErrorBubble(`An error occured while counting the tokens for the string. Try again later. Input was of type ${inputType}. Extracted text: ${inputText}`);
-      throw new Error(`Input must be a string. Received: ${inputType}. Extracted text: ${inputText}`);
-    }
+//       createErrorBubble(`An error occured while counting the tokens for the string. Try again later. Input was of type ${inputType}. Extracted text: ${inputText}`);
+//       throw new Error(`Input must be a string. Received: ${inputType}. Extracted text: ${inputText}`);
+//     }
 
-    //console.log(" - INPUTSTRING: " + inputString);
-    return inputString.split(' ').reduce((tokenCount, token) => tokenCount + (token.trim() ? Math.ceil(token.length / 4) : 0), 0);
-  } catch (error) {
-    console.error(`Error in countTokens: ${error.message}`);
-    return 0; // default return value
-  }
-}
-export function trimMessage(message, maxTokens) {
+//     //console.log(" - INPUTSTRING: " + inputString);
+//     return inputString.split(' ').reduce((tokenCount, token) => tokenCount + (token.trim() ? Math.ceil(token.length / 4) : 0), 0);
+//   } catch (error) {
+//     console.error(`Error in countTokens: ${error.message}`);
+//     return 0; // default return value
+//   }
+// }
+export function trimMessage(message, maxTokens = 2000) {
   if (typeof message !== 'string' || typeof maxTokens !== 'number') {
-    throw new Error('Input types: Message should be a string, maxTokens should be a number');
+    throw new TypeError('Input types: Message should be a string, maxTokens should be a number');
   }
+  const wordsArray = message.split(' ');
   let tokenCount = 0;
-  return message
-    .split(' ')
-    .filter((token) => {
-      if (tokenCount + Math.ceil(token.length / 4) <= maxTokens) {
-        tokenCount += Math.ceil(token.length / 4);
-        return true;
-      }
-      return false;
-    })
-    .join(' ');
+  const resultArray = [];
+  for (let i = 0; i < wordsArray.length; i++) {
+    const wordLength = Math.ceil(wordsArray[i].length / 4);
+    if (tokenCount + wordLength <= maxTokens) {
+      tokenCount += wordLength;
+      resultArray.push(wordsArray[i]);
+    } else {
+      break;
+    }
+  }
+  return resultArray.join(' ');
 }
 export function extractUrl(string) {
+  // console.log("EXTRACTING URL NOW");
   var pattern = /(https?:\/\/(?:[-\w.]|(?:%[\da-fA-F]{2}))+.*)/i;
   var match = string.match(pattern);
+  // console.log(" - RETURNING MATCH: " + match);
   return match ? match[0] : null;
 }
 export function extractText(htmlString) {
+  // console.log("EXTRACTING TEXT NOW");
   const parser = new DOMParser();
   const doc = parser.parseFromString(htmlString, 'text/html');
   const paragraphs = doc.querySelectorAll('p');
@@ -71,97 +76,98 @@ export function extractText(htmlString) {
   for (const p of paragraphs) {
     extractedText += p.textContent + '\n';
   }
-  console.log(' - CLEANED UP TEXT: ' + extractedText);
+  // console.log(' - CLEANED UP TEXT: ' + extractedText);
   return extractedText;
 }
-export function chunkText(text, chunkTokenLimit = 1000, chunkNumberLimit = 5) {
-  // Average characters per token (for English)
-  const charsPerToken = 4; // From OpenAI documentation
-
-  // Characters limit per chunk
-  const charsLimit = charsPerToken * chunkTokenLimit;
-
-  const words = text.split(' ');
-  let chunks = [];
-  let currentChunk = [];
-  let currentChunkChars = 0;
-  let startIndex = 0;
-  let endIndex = 0;
-
-  for (const word of words) {
-    // If the chunk number limit has been reached, break the loop
-    if (chunks.length === chunkNumberLimit) {
-      console.log(`Chunk number limit of ${chunkNumberLimit} reached, stopping chunking.`);
-      break;
-    }
-
-    if (currentChunkChars + word.length <= charsLimit) {
-      currentChunk.push(word);
-      currentChunkChars += word.length;
-    } else {
-      // Add the current chunk to the list of chunks with additional information
-      chunks.push({
-        text: currentChunk.join(' '),
-        tokens: Math.round(currentChunkChars / charsPerToken),
-        startIndex: startIndex,
-        endIndex: endIndex - 1, // Subtract 1 because we don't want to include the first word of the next chunk
-      });
-
-      // Start a new chunk with the current word
-      currentChunk = [word];
-      currentChunkChars = word.length;
-      startIndex = endIndex + 1; // +1 to not include the first space of the current word
-    }
-    endIndex += word.length + 1; // +1 to account for space
-  }
-
-  // Add the last chunk if it's non-empty and we haven't reached the chunk limit
-  if (currentChunkChars > 0 && chunks.length < chunkNumberLimit) {
-    chunks.push({
-      text: currentChunk.join(' '),
-      tokens: Math.round(currentChunkChars / charsPerToken),
-      startIndex: startIndex,
-      endIndex: endIndex,
-    });
-  } else {
-    const systemMessageText = 'You have maxed out your chunk settings, max tokens per chunk: ' + chunkTokenLimit + ', max chunk limit: ' + chunkNumberLimit + '.';
-    systemMessage = {
-      message: {
-        id: generateGUID,
-        role: 'system',
-        timestamp: currentDate,
-        ignore: false,
-        tokens: countTokens(systemMessageText),
-        content: systemMessageText,
+export async function countTokens(text) {
+  // console.log("GETTING STRING TOKENS");
+  const response = await fetch('https://wrangler.jrice.workers.dev/', {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'text/plain'
       },
-    };
-    buildChatBubble(systemMessage);
-  }
-
-  // Return chunks as JSON object
-  return { chunks };
-}
-export async function SummarizeChunksOpenAI(ChunksToSummarize) {
-  let json_array_responses = '';
-  console.log('SUMMARIZING TEXT CHUNKS NOW');
-  console.log(' - CHUNKS TO SUMMARIZE: ' + JSON.stringify(ChunksToSummarize));
-  let chunkHistory = [{ role: 'system', content: 'Summarizing chunked text, retaining as much critical detail from each chunk as possible.' }];
-  for (let chunk of ChunksToSummarize.chunks) {
-    let chunkText = chunk.text;
-    console.log(' - CURRENT CHUNK: ' + chunkText);
-    let chunkTextBody = { role: 'system', content: chunkText };
-    let message = {
-      id: generateGUID(),
-      role: 'user',
-      timestamp: currentDate,
-      ignore: false,
-      tokens: countTokens(chunkText),
-      content: chunkText,
-    };
-    const response = await fetchCloudFlareMessage(message);
-
-    chunkHistory.push(response);
-  }
-  return chunkHistory;
+      body: text
+  });
+  const data = await response.text();
+  // console.log(" - TOKENS COUNT: " + await data);
+  return data;
 }
 
+// export function countTokens(text) {
+//   const htmlEntityPattern = /&#[xX]?\d+;/g; // Matches HTML entities like &#x27; or &#38;
+//   const wordTokens = text.split(/[\s.,!?]+/);
+
+//   // Count HTML entities as 1 token each.
+//   const htmlEntities = text.match(htmlEntityPattern);
+//   const htmlEntityTokens = htmlEntities ? htmlEntities.length : 0;
+  
+//   // Filter out empty strings
+//   const validTokens = wordTokens.filter(token => token.length > 0);
+
+//   return validTokens.length + htmlEntityTokens;
+// }
+
+
+
+export async function createChunkedText(text, maxTokensPerChunk = 1000) {
+  // console.log("CREATING CHUNKS");
+  // console.log(" - TEXT TO CHUNK AND SUMMARIZE: " + text);
+  
+  const approxTokenLength = 4;
+  const maxCharsPerChunk = maxTokensPerChunk * approxTokenLength;
+
+  let chunks = [];
+  let startIndex = 0;
+
+  while (startIndex < text.length) {
+    let endIndex = startIndex + maxCharsPerChunk;
+
+    // Find the last period within the chunk
+    let periodIndex = text.lastIndexOf('.', endIndex);
+
+    // If there is no period within the chunk, find the next period after the chunk
+    if (periodIndex === -1 || periodIndex < startIndex) {
+      periodIndex = text.indexOf('.', endIndex);
+    }
+
+    // If a period is found, include it in the chunk
+    if (periodIndex !== -1) {
+      endIndex = periodIndex + 1;
+    }
+
+    let chunk = text.slice(startIndex, endIndex);
+    let tokens = await countTokens(chunk);
+    // console.log(" - CHUNK TEXT: " + chunk);
+    // console.log(" - CHUNK TOKENS: " + await tokens);
+    chunks.push({
+      content: chunk,
+      tokens: tokens,
+    });
+
+    startIndex = endIndex;
+  }
+
+  console.log(" - RETURNING CHUNKS: " + JSON.stringify(chunks));
+  return chunks;
+}
+
+
+export function getRandomColor() {
+	const letters = '0123456789ABCDEF';
+	let color = '#';
+	for (let i = 0; i < 6; i++) {
+		color += letters[Math.floor(Math.random() * 16)];
+	}
+	return color;
+}
+export function isMobileScreen() {
+	return window.innerWidth <= 1000; // Adjust the threshold as needed
+}
+export function setStyles(element, styles, innerHTML) {
+	for (const property in styles) {
+		element.style[property] = styles[property];
+	}
+	if (innerHTML != null) {
+		element.innerHTML = innerHTML;
+	}
+}

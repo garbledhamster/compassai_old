@@ -1,8 +1,8 @@
-import { generateGUID, countTokens, trimMessage, extractUrl, extractText, chunkText, SummarizeChunksOpenAI } from '/js/general.js';
+import { generateGUID, countTokens, trimMessage, extractUrl, extractText, createChunkedText,  } from '/js/general.js';
 
 export function isMemoryDuplicate(memory) {
-  console.log('CHECKING IF MEMORY IS A DUPLICATE');
-  console.log(' - MEMORY: ' + JSON.stringify(memory));
+  //console.log('CHECKING IF MEMORY IS A DUPLICATE');
+  // console.log(' - MEMORY: ' + JSON.stringify(memory));
 
   let memoryContent = memory.content.trim().toLowerCase();
   memoryContent = memoryContent.replace(/(<([^>]+)>)/gi, ''); // Remove HTML tags
@@ -10,18 +10,18 @@ export function isMemoryDuplicate(memory) {
   const memoriesContainer = document.getElementById('memoriesContainer');
   const memories = memoriesContainer.getElementsByClassName('memory-container');
 
-  console.log(' - MEMORY COUNT: ' + (memories.length + 1));
+  // console.log(' - MEMORY COUNT: ' + (memories.length + 1));
   for (let i = 0; i < memories.length; i++) {
     let contentElement = memories[i].querySelector('.memory-content').innerText.trim().toLowerCase();
-    console.log(' - MEMORY CONTENT: ' + memoryContent);
-    console.log(' - CONTENT ELEMENT: ' + contentElement);
+    // console.log(' - MEMORY CONTENT: ' + memoryContent);
+    // console.log(' - CONTENT ELEMENT: ' + contentElement);
 
     if (memoryContent === contentElement) {
-      console.log(' - Duplicate found, returning true.');
+      // console.log(' - Duplicate found, returning true.');
       return true;
     }
   }
-  console.log(' - Duplicate not found, returning false.');
+  // console.log(' - Duplicate not found, returning false.');
   return false;
 }
 

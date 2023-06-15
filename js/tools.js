@@ -2,35 +2,34 @@ import { chattyConfig } from './tools/chatty.js';
 import { summarizerConfig } from './tools/summarizer.js';
 import { articulatorConfig } from './tools/articulator.js';
 import { chickenConfig } from './tools/chicken.js';
-import { guideOverlayContainer, guideOverlayContent, guideImageContainer, guideCloseButton } from '/dev/js/react/guide.js';
-import { isMemoryDuplicate, newMemory } from '/dev/js/memories.js';
-import { generateGUID, countTokens, trimMessage, extractUrl, extractText, chunkText, SummarizeChunksOpenAI } from '/dev/js/general.js';
+import { guideOverlayContainer, guideOverlayContent, guideImageContainer, guideCloseButton } from '/js/react/guide.js';
+import { isMemoryDuplicate, newMemory } from '/js/memories.js';
+import { generateGUID, countTokens, trimMessage, extractUrl, extractText, createChunkedText, getRandomColor, isMobileScreen, setStyles } from '/js/general.js';
 
 // AI CONFIG CONTROLS //
-
 function checkAiConfigFileExists() {
-	console.log('CHECKING IF AI CONFIG EXISTS: ');
+	// console.log('CHECKING IF AI CONFIG EXISTS: ');
 	var configFile = localStorage.getItem(aiConfigFile);
 	if (configFile !== null) {
-		console.log(' - ' + aiConfigFile + ' exists...');
+		// console.log(' - ' + aiConfigFile + ' exists...');
 		return true;
 	} else {
 		// The item 'aiConfigFile' does not exist in local storage
-		console.log(' - ' + aiConfigFile + ' does not exist');
+		// console.log(' - ' + aiConfigFile + ' does not exist');
 		return false;
 	}
 }
 function saveAIConfig() {
-	console.log('SAVING AI CONFIG: ' + JSON.stringify(aiConfig));
-	console.log(' - AI CONFIG FILE: ' + aiConfigFile);
+	//console.log('SAVING AI CONFIG: ' + JSON.stringify(aiConfig));
+	//console.log(' - AI CONFIG FILE: ' + aiConfigFile);
 	try {
 		localStorage.setItem(aiConfigFile, JSON.stringify(aiConfig));
 	} catch (error) {
-		console.log(' - ERROR OCCURED WHILE SAVING AI CONFIG:', error);
+		createConsoleBubble('Error occured while saving configuration\n' + error);
 	}
 }
 async function loadAIConfig() {
-	console.log('LOADING AI CONFIG');
+	// console.log('LOADING AI CONFIG');
 
 	try {
 		aiConfig = chattyConfig;
@@ -43,7 +42,7 @@ async function loadAIConfig() {
 		loadMemories();
 		return aiConfig;
 	} catch {
-		console.log(' - FAILED TO CONFIGURE AI CONFIG');
+		// console.log(' - FAILED TO CONFIGURE AI CONFIG');
 	}
 }
 function getObjectAiConfig(keyName, lookup = null) {
@@ -76,7 +75,6 @@ function selectById(id) {
 }
 
 // VARIABLES //
-
 let aiConfig = '';
 var maxTokens = 8192;
 var maxRetries = 3;
@@ -102,10 +100,9 @@ let toolsHTML;
 let currentConversationID;
 
 // ASYNC FUNCTIONS //
-
 async function fetchData(jsonObjectBody, isStream = false) {
-	console.log('FETCHING FROM CLOUDFLARE WORKER NOW');
-	console.log(' - JSON OBJECT BODY: ' + jsonObjectBody);
+	// console.log('FETCHING FROM CLOUDFLARE WORKER NOW');
+	// console.log(' - JSON OBJECT BODY: ' + jsonObjectBody);
 	try {
 		const workerUrl = 'https://compass.jrice.workers.dev/';
 		const response = await Promise.race([
@@ -118,10 +115,10 @@ async function fetchData(jsonObjectBody, isStream = false) {
 			}),
 			new Promise((_, reject) => setTimeout(() => reject(new Error('Request timed out')), 15000)),
 		]);
-		console.log(' - FETCH RESPONSE: ', response);
+		// console.log(' - FETCH RESPONSE: ', response);
 		if (!response.ok) {
 			createErrorBubble('An error occurred during crossh web lookup:<br><br>' + response.status);
-			console.error('Error: ' + response.status);
+			// console.error('Error: ' + response.status);
 			throw new Error('Error fetching data from the worker.');
 		}
 		if (isStream) {
@@ -134,8 +131,8 @@ async function fetchData(jsonObjectBody, isStream = false) {
 			} else {
 				data = await response.text();
 			}
-			console.log('FETCHED DATA: ', data);
-			console.log(' - DATA: ' + data);
+			// console.log('FETCHED DATA: ', data);
+			// console.log(' - DATA: ' + data);
 			return data;
 		}
 	} catch (error) {
@@ -150,75 +147,82 @@ async function fetchData(jsonObjectBody, isStream = false) {
 	}
 }
 async function fetchCloudFlareMessage(message) {
-	console.log('FETCHING DATA FROM CLOUDFLARE');
-	let messageToOpenAI = message.content;
+    let messageToOpenAI = message.content;
+    const parent = selectById('tool-output-inner');
+    const url = extractUrl(messageToOpenAI);
+    const currentDate = new Date().toLocaleString();
 
-	if (!messageToOpenAI) {
-		return null;
-	}
-
-	const parent = selectById('tool-output-inner');
-	const url = extractUrl(messageToOpenAI);
-
-	if (url) {
-		createConsoleBubble('Url found. Fetching website data now.');
-		try {
-			const corsshBody = {
-				option: 'corssh',
-				corsshRequestBody: JSON.stringify({ url: url }),
-			};
-			const webdata = await fetchData(JSON.stringify(corsshBody), false);
-			if (await webdata) {
-				console.log(' - WEBDATA: ' + webdata);
-				createConsoleBubble("I managed to retrieve the website data. I'm sending the website data to get processed now.  It may take a while.");
-			}
-			messageToOpenAI = messageToOpenAI + '<br><br>' + "WEBSITE DATA: '" + webdata + "'";
+    if (!messageToOpenAI) {
+        return null;
+    } else {
 			createUserBubble(messageToOpenAI);
-		} catch (error) {
-			createConsoleBubble("Uh oh, getting to the website was harder than I thought. Here's the error that occured.");
-			createErrorBubble(error.message);
+
 		}
-	} else {
-		createUserBubble(messageToOpenAI);
-	}
-	let chatHistory = await getConversationHistory(5);
-	let instructions = await getImportantMemories(2);
-	console.log(' - INSTRUCTIONS: ' + JSON.stringify(instructions));
-	instructions.forEach((instruction) => {
-		createSystemMessage(instruction.content);
-	});
 
-	const currentDate = new Date().toLocaleString();
-	const assistantMessage = { id: generateGUID(), role: 'assistant', timestamp: currentDate, ignore: false, tokens: 0, content: '' };
-	const assistantBubble = buildChatBubble(assistantMessage);
-	assistantBubble.style.display = 'none';
-	parent.prepend(assistantBubble);
+    async function fetchUrlData(url) {
+        createConsoleBubble('Url found. Fetching website data now.');
+        try {
+            const corsshBody = {
+                option: 'corssh',
+                corsshRequestBody: JSON.stringify({ url: url }),
+            };
+            const webdata = await fetchData(JSON.stringify(corsshBody), false);
+            if (await webdata) {
+                // console.log(' - WEBDATA: ' + webdata);
+                createConsoleBubble("I managed to retrieve the website data. I'm sending the website data to get processed now.  It may take a while.");
+            }
+            const webdataChunks = await createChunkedText(webdata);
+            // console.log(' - WEBDATA CHUNKS : ' + JSON.stringify(webdataChunks));
+            const webdataSummarizedChunks = await SummarizeChunksOpenAI(webdataChunks);
+            createAssistantBubble(await webdataSummarizedChunks);
+        } catch (error) {
+            createConsoleBubble("Uh oh, getting to the website was harder than I thought. Here's the error that occured.");
+            createErrorBubble(error.message);
+        }
+    }
 
-	console.log(' - MESSAGE CONTENT: ' + message.content);
+    if (url) {
+        await fetchUrlData(url);
+    } else {
+        createUserBubble(messageToOpenAI);
+    }
+
+    let chatHistory = await getConversationHistory(5);
+    let instructions = await getImportantMemories(2);
+    // console.log(' - INSTRUCTIONS: ' + JSON.stringify(instructions));
+    instructions.forEach((instruction) => {
+        createSystemMessage(instruction.content);
+    });
+
+    const assistantMessage = { id: generateGUID(), role: 'assistant', timestamp: currentDate, ignore: false, tokens: 0, content: '' };
+    const assistantBubble = buildChatBubble(assistantMessage);
+    assistantBubble.style.display = 'none';
+    parent.prepend(assistantBubble);
+	// console.log(' - MESSAGE CONTENT: ' + message.content);
 
 	try {
-		console.log(' - CHAT HISTORY BEFORE NEW MESSAGE: ' + JSON.stringify(chatHistory));
+		// console.log(' - CHAT HISTORY BEFORE NEW MESSAGE: ' + JSON.stringify(chatHistory));
 
 		const openaiBody = {
 			option: 'openai',
 			openaiRequestBody: JSON.stringify({
 				model: 'gpt-3.5-turbo',
 				messages: [...instructions, ...chatHistory, { role: 'user', content: messageToOpenAI }],
-				temperature: .9,
+				temperature: 0.9,
 				stream: true,
 			}),
 		};
-		console.log(' - MESSAGE WITH CHAT HISTORY: ' + JSON.stringify(openaiBody));
+		// console.log(' - MESSAGE WITH CHAT HISTORY: ' + JSON.stringify(openaiBody));
 		const reader = await fetchData(JSON.stringify(openaiBody), true);
 		if (!reader) {
 			throw new Error('Failed to read response as a stream');
 		}
-		console.log(' - RESPONSE FROM CLOUDFLARE/OPENAI: ' + reader);
+		// console.log(' - RESPONSE FROM CLOUDFLARE/OPENAI: ' + reader);
 		const decoder = new TextDecoder('utf-8');
 		let remaining = '';
 		return new Promise((resolve, reject) => {
 			let isFirstLine = true;
-			console.log(' - STARTING STREAM');
+			// console.log(' - STARTING STREAM');
 			reader.read().then(function processText({ done, value }) {
 				let assistantContent = '';
 				const text = decoder.decode(value);
@@ -251,7 +255,7 @@ async function fetchCloudFlareMessage(message) {
 						try {
 							chunk = JSON.parse(json);
 						} catch (e) {
-							console.error('Invalid JSON: ', json, ' Error: ', e);
+							// console.error('Invalid JSON: ', json, ' Error: ', e);
 							continue;
 						}
 						if (chunk.choices && chunk.choices[0] && chunk.choices[0].delta) {
@@ -276,19 +280,94 @@ async function fetchCloudFlareMessage(message) {
 		console.error(error);
 	}
 }
+// async function SummarizeChunksOpenAI(ChunksToSummarize) {
+// 	let json_array_responses = [];
+// 	console.log('SUMMARIZING TEXT CHUNKS NOW');
+// 	console.log(' - CHUNKS TO SUMMARIZE: ' + JSON.stringify(ChunksToSummarize));
+// 	let chunkHistory = [{ role: 'system', content: 'Summarizing chunked text, retaining as much critical detail from each chunk as possible.' }];
+// 	for (let chunk of ChunksToSummarize) {
+// 		let chunkText = chunk.content;
+// 		console.log(' - CURRENT CHUNK: ' + chunkText);
+// 		let chunkTextBody = { role: 'system', content: chunkText };
+// 		const currentDate = new Date().toLocaleString();
+// 		let chunkMessage = {
+// 			id: generateGUID(),
+// 			role: 'user',
+// 			timestamp: currentDate,
+// 			ignore: false,
+// 			tokens: countTokens(chunkText),
+// 			content: chunkText,
+// 		};
+// 		const systemInstruction = { role: 'system', content: 'Provide a concise summary of the following text, ensuring to identify and highlight all key details: ' + chunkText };
+// 		createSystemMessage((systemInstruction).content);
+// 		const openaiBody = {
+// 			option: 'openai',
+// 			openaiRequestBody: JSON.stringify({
+// 				model: 'gpt-3.5-turbo',
+// 				messages: [systemInstruction],
+// 				temperature: 0.3,
+// 				stream: false,
+// 			}),
+// 		};
+// 		const response = JSON.parse(await fetchData(JSON.stringify(openaiBody)), false);
+// 		const extractedContent = response.choices[0].message.content;
+
+// 		console.log(' - OPENAI SUMMARY RESPONSE: ' + extractedContent);
+// 		chunkHistory.push(extractedContent);
+// 	}
+// 	console.log(" - CHUNK HISTORY: " + chunkHistory);
+// 	return chunkHistory;
+// }
 
 // CONVERSATION AND MESSAGING FUNCTIONS //
 
+async function SummarizeChunksOpenAI(ChunksToSummarize) {
+	let json_array_responses = [];
+	// console.log('SUMMARIZING TEXT CHUNKS NOW');
+	// console.log(' - CHUNKS TO SUMMARIZE: ' + JSON.stringify(ChunksToSummarize));
+	let chunkHistory = [];
+
+	for (let i = 0; i < ChunksToSummarize.length; i++) {
+		let chunk = ChunksToSummarize[i];
+		let chunkText = chunk.content;
+
+		// Skip the last chunk if it does not end with a period
+		if (i === ChunksToSummarize.length - 1 && !chunkText.endsWith('.')) {
+			continue;
+		}
+
+		// console.log(' - CURRENT CHUNK: ' + chunkText);
+		const systemInstruction = { role: 'system', content: 'Provide a concise summary of the following text, ensuring to identify and highlight all key details: ' + chunkText };
+		createSystemMessage(systemInstruction.content);
+		const openaiBody = {
+			option: 'openai',
+			openaiRequestBody: JSON.stringify({
+				model: 'gpt-3.5-turbo',
+				messages: [systemInstruction],
+				temperature: 0.3,
+				stream: false,
+			}),
+		};
+		const response = JSON.parse(await fetchData(JSON.stringify(openaiBody)), false);
+		const extractedContent = response.choices[0].message.content;
+
+		// console.log(' - OPENAI SUMMARY RESPONSE: ' + extractedContent);
+		chunkHistory.push(extractedContent);
+	}
+	// console.log(" - CHUNK HISTORY: " + chunkHistory);
+	return chunkHistory;
+}
+
 async function getConversationHistory(limit = null) {
-	console.log('GETTING CONVERSATION HISTORY');
+	// console.log('GETTING CONVERSATION HISTORY');
 	let conversations = getObjectAiConfig('conversations');
 	let conversation = conversations.find((convo) => convo.id === currentConversationID);
 	let chatHistory = [];
 
 	conversation.messages.forEach((message) => {
-		console.log(' - CHECKING MESSAGE');
-		console.log(' - MESSAGE: ' + JSON.stringify(message));
-		console.log('   - MESSAGE IGNORE STATUS: ' + message.ignore);
+		// console.log(' - CHECKING MESSAGE');
+		// console.log(' - MESSAGE: ' + JSON.stringify(message));
+		// console.log('   - MESSAGE IGNORE STATUS: ' + message.ignore);
 		if (!message.ignore) {
 			const { role, content } = message;
 			chatHistory.push({ role, content });
@@ -300,19 +379,19 @@ async function getConversationHistory(limit = null) {
 		chatHistory = chatHistory.slice(-limit);
 	}
 
-	console.log(' - CHAT HISTORY: ' + JSON.stringify(chatHistory));
+	// console.log(' - CHAT HISTORY: ' + JSON.stringify(chatHistory));
 	return chatHistory;
 }
 function loadConversations() {
-	console.log('LOADING CONVERSATIONS');
-	console.log(' - AI CONFIG: ' + JSON.stringify(aiConfig));
-	console.log(' - CONVERSATIONS OBJECT: ' + JSON.stringify(getObjectAiConfig('conversations')));
+	//console.log('LOADING CONVERSATIONS');
+	//console.log(' - AI CONFIG: ' + JSON.stringify(aiConfig));
+	//console.log(' - CONVERSATIONS OBJECT: ' + JSON.stringify(getObjectAiConfig('conversations')));
 	const conversations = getObjectAiConfig('conversations');
 	const parent = selectById('tool-output-inner');
 	const messages = parent.getElementsByClassName('message');
 
 	while (messages.length > 0) {
-		console.log('REMOVING MESSAGES NOW...');
+		// console.log('REMOVING MESSAGES NOW...');
 		messages[0].remove();
 	}
 
@@ -340,25 +419,25 @@ function newConversation(title) {
 	return newConversation;
 }
 function appendMessageAiConfig(message) {
-	console.log('STARTING TO APPEND MESSAGES NOW');
+	// console.log('STARTING TO APPEND MESSAGES NOW');
 	if (getObjectAiConfig('id', message.id)) {
-		console.log(' - MESSAGE ALREADY IN AI CONFIG, SKIPPING');
+		// console.log(' - MESSAGE ALREADY IN AI CONFIG, SKIPPING');
 		return;
 	}
-	console.log(' - MESSAGE: ' + JSON.stringify(message));
+	// console.log(' - MESSAGE: ' + JSON.stringify(message));
 
 	let conversations = getObjectAiConfig('conversations');
-	console.log(' - CONVERSATIONS JSON: ' + JSON.stringify(conversations));
+	//console.log(' - CONVERSATIONS JSON: ' + JSON.stringify(conversations));
 	let conversationIndex = conversations.findIndex((convo) => convo.id === currentConversationID);
-	console.log(' - CONVERSATION JSON: ' + JSON.stringify(conversations[conversationIndex]));
+	//console.log(' - CONVERSATION JSON: ' + JSON.stringify(conversations[conversationIndex]));
 	conversations[conversationIndex].messages.push(message);
-	console.log(' - ADDING MESSAGE TO CONVERSATION: ' + JSON.stringify(conversations[conversationIndex]));
+	//console.log(' - ADDING MESSAGE TO CONVERSATION: ' + JSON.stringify(conversations[conversationIndex]));
 	aiConfig.conversations = conversations;
 	saveAIConfig();
 }
 function buildChatBubble(message) {
-	console.log('BUILDING CHAT BUBBLE:\n');
-	console.log(' - MESSAGE JSON: ' + JSON.stringify(message));
+	// console.log('BUILDING CHAT BUBBLE:\n');
+	// console.log(' - MESSAGE JSON: ' + JSON.stringify(message));
 
 	let currentDate = new Date().toLocaleString();
 	if (message.timestamp !== '' && new Date(message.timestamp).getTime() <= 0) {
@@ -372,14 +451,14 @@ function buildChatBubble(message) {
 	chatBubbleText.innerHTML = message.content;
 	chatBubbleText.className = 'chatBubbleText';
 	chatBubble.appendChild(chatBubbleText);
-	console.log(' - APPENDING MESSAGE TO AI CONFIG');
+	// console.log(' - APPENDING MESSAGE TO AI CONFIG');
 
 	if (message.content) {
 		appendMessageAiConfig(message);
 	}
 	return chatBubble;
 }
-function createErrorBubble(message) {
+async function createErrorBubble(message) {
 	let currentDate = new Date().toLocaleString();
 	const parent = selectById('tool-output-inner');
 	parent.prepend(
@@ -393,7 +472,7 @@ function createErrorBubble(message) {
 		}),
 	);
 }
-function createConsoleBubble(message) {
+async function createConsoleBubble(message) {
 	let currentDate = new Date().toLocaleString();
 	const parent = selectById('tool-output-inner');
 	parent.prepend(
@@ -402,12 +481,12 @@ function createConsoleBubble(message) {
 			role: 'console',
 			timestamp: currentDate,
 			ignore: true,
-			tokens: countTokens(message),
+			tokens: await countTokens(message),
 			content: message,
 		}),
 	);
 }
-function createSystemMessage(message) {
+async function createSystemMessage(message) {
 	let currentDate = new Date().toLocaleString();
 	const parent = selectById('tool-output-inner');
 	parent.prepend(
@@ -416,14 +495,14 @@ function createSystemMessage(message) {
 			role: 'system',
 			timestamp: currentDate,
 			ignore: false,
-			tokens: countTokens(message),
+			tokens: await countTokens(message),
 			content: message,
 		}),
 	);
 }
-function createUserBubble(message) {
-	console.log('CREATING USER BUBBLE');
-	console.log(' - MESSAGE: ' + message);
+async function createUserBubble(message) {
+	// console.log('CREATING USER BUBBLE');
+	// console.log(' - MESSAGE: ' + message);
 	let currentDate = new Date().toLocaleString();
 	const parent = selectById('tool-output-inner');
 	parent.prepend(
@@ -432,12 +511,12 @@ function createUserBubble(message) {
 			role: 'user',
 			timestamp: currentDate,
 			ignore: false,
-			tokens: countTokens(message),
+			tokens: await countTokens(message),
 			content: message,
 		}),
 	);
 }
-function createAssistantBubble(message) {
+async function createAssistantBubble(message) {
 	let currentDate = new Date().toLocaleString();
 	const parent = selectById('tool-output-inner');
 	parent.prepend(
@@ -446,7 +525,7 @@ function createAssistantBubble(message) {
 			role: 'assistant',
 			timestamp: currentDate,
 			ignore: false,
-			tokens: countTokens(message),
+			tokens: await countTokens(message),
 			content: message,
 		}),
 	);
@@ -454,28 +533,28 @@ function createAssistantBubble(message) {
 
 // MEMORY FUNCTIONS //
 function loadMemories() {
-	console.log('LOADING MEMORIES NOW...');
-	console.log(' - AI CONFIG: ' + JSON.stringify(aiConfig));
+	//console.log('LOADING MEMORIES NOW...');
+	//console.log(' - AI CONFIG: ' + JSON.stringify(aiConfig));
 	var memories = aiConfig['memories'];
 	var memoriesContainer = selectById('memories');
-	console.log(' - MEMORIES: ' + JSON.stringify(memories));
+	// console.log(' - MEMORIES: ' + JSON.stringify(memories));
 	if (memoriesContainer !== null) {
-		console.log(' - MEMORIES FOUND, REMOVING THEM');
+		// console.log(' - MEMORIES FOUND, REMOVING THEM');
 		while (memoriesContainer.firstChild) {
-			console.log(' - MEMORY: ' + JSON.stringify(memories.firstChild));
+			// console.log(' - MEMORY: ' + JSON.stringify(memories.firstChild));
 			memorimemoriesContaineres.removeChild(memories.firstChild);
 		}
 	} else {
-		console.log(' - NO MEMORIES FOUND');
+		// console.log(' - NO MEMORIES FOUND');
 		aiConfig.memories.forEach(function (memory) {
-			console.log(' - Memory being loaded: ' + JSON.stringify(memory));
+			// console.log(' - Memory being loaded: ' + JSON.stringify(memory));
 			appendMemoryBubble(memory);
 		});
 	}
 }
 function appendMemoryBubble(memory) {
-	console.log('APPENDING MEMORY BUBBLE NOW...');
-	console.log(' - Memory being appended: ' + JSON.stringify(memory));
+	// console.log('APPENDING MEMORY BUBBLE NOW...');
+	// console.log(' - Memory being appended: ' + JSON.stringify(memory));
 
 	if (isMemoryDuplicate(memory)) {
 		//createSystemBubble("The memory '" + memory.content.trim() + "' already exists.");
@@ -558,7 +637,7 @@ function appendMemoryBubble(memory) {
 	memoriesContainer.appendChild(memoryContainer);
 }
 function handleImportanceButtonClick(memory, memoryImportanceButton) {
-	console.log('Importance button clicked for memory:', memory);
+	// console.log('Importance button clicked for memory:', memory);
 	for (let i = 0; i < aiConfig.memories.length; i++) {
 		if (aiConfig.memories[i].id === memory.id) {
 			aiConfig.memories[i].important = !aiConfig.memories[i].important;
@@ -573,7 +652,7 @@ function handleImportanceButtonClick(memory, memoryImportanceButton) {
 	}
 }
 function handleDeleteButtonClick(memory, memoryDeleteButton) {
-	console.log('Delete button clicked for memory:', memory);
+	// console.log('Delete button clicked for memory:', memory);
 	var memoryContainer = document.getElementById('memoryContainer_' + memory.id);
 	if (memoryContainer) {
 		for (let i = 0; i < aiConfig.memories.length; i++) {
@@ -587,7 +666,7 @@ function handleDeleteButtonClick(memory, memoryDeleteButton) {
 	}
 }
 async function getImportantMemories(limit = null) {
-	console.log('GETTING IMPORTANT MEMORIES');
+	// console.log('GETTING IMPORTANT MEMORIES');
 
 	let memories = getObjectAiConfig('memories');
 
@@ -597,8 +676,8 @@ async function getImportantMemories(limit = null) {
 	let memoryMessages = [];
 
 	importantMemories.forEach((memory) => {
-		console.log(' - CHECKING MEMORY');
-		console.log(' - MEMORY: ' + JSON.stringify(memory));
+		// console.log(' - CHECKING MEMORY');
+		// console.log(' - MEMORY: ' + JSON.stringify(memory));
 		const content = memory.content;
 		memoryMessages.push({ role: 'system', content });
 	});
@@ -608,7 +687,7 @@ async function getImportantMemories(limit = null) {
 		memoryMessages = memoryMessages.slice(-limit);
 	}
 
-	console.log(' - MEMORY MESSAGES: ' + JSON.stringify(memoryMessages));
+	// console.log(' - MEMORY MESSAGES: ' + JSON.stringify(memoryMessages));
 	return memoryMessages;
 }
 
@@ -619,12 +698,12 @@ async function handlesShortcutClipboardButtonClick() {
 	const copiedText = [...selectById('tool-output').children].map((child) => child.textContent).join('\n');
 	if (copiedText.trim() !== '') {
 		navigator.clipboard.writeText(copiedText);
-		console.log('Text copied to clipboard:', copiedText);
+		// console.log('Text copied to clipboard:', copiedText);
 	}
 }
 async function TestButton() {}
 async function handleHistoryToggleButton() {
-	console.log('CHAT HISTORY TOGGLE PRESSED');
+	// console.log('CHAT HISTORY TOGGLE PRESSED');
 	const toggleButton = selectById('chatHistoryToggle');
 	if (chatHistoryToggle === 'infinite') {
 		chatHistoryToggle = 'aiLastOutput';
@@ -638,14 +717,14 @@ async function handleHistoryToggleButton() {
 		chatHistoryToggle = 'infinite';
 		toggleButton.innerHTML = '&#x267E;&#xFE0F;';
 	}
-	console.log(' - Chat history toggle is now set to ' + chatHistoryToggle);
+	// console.log(' - Chat history toggle is now set to ' + chatHistoryToggle);
 }
 async function handleMemoryCreation(e) {
-	console.log('CREATING NEW MEMORY NOW...');
+	// console.log('CREATING NEW MEMORY NOW...');
 	e.preventDefault();
 	const selectedText = window.getSelection().toString();
 	if (selectedText.length <= 0) {
-		console.log(' - Select text to create a memory');
+		// console.log(' - Select text to create a memory');
 		return null;
 	}
 	const memoryButton = e.target;
@@ -734,6 +813,7 @@ async function handleShortcutCloseToolButton() {
 
 	if (!visibleChildExists) handleMenuButtonClick();
 }
+
 //// MENU ITEMS
 async function handleGuidesItemClick() {
 	var shortcutCloseToolButton = selectById('shortcutCloseToolButton');
@@ -799,7 +879,6 @@ async function handleToolsItemClick() {
 		}, 300);
 	}
 }
-
 async function handleSubmitButtonClick() {
 	event.preventDefault();
 
@@ -852,7 +931,7 @@ async function handleSubmitButtonClick() {
 	userInput.disabled = false;
 }
 async function handleMenuButtonClick() {
-	console.log('MENU BUTTON CLICKED');
+	// console.log('MENU BUTTON CLICKED');
 	var menuContainer = document.getElementById('menu-container');
 	if (menuContainer.style.display === 'none' || menuContainer.style.display === '') {
 		menuContainer.style.display = 'flex';
@@ -905,25 +984,40 @@ async function handleSettingsItemClick() {
 		}, 300);
 	}
 }
+async function handleCloseMenuItem() {
+	// console.log('TEST BUTTON PRESSED...');
+	// console.log('MENU BUTTON CLICKED');
+
+	var popoutCardContainers = document.getElementById('popoutCardContainers');
+	var children = popoutCardContainers.children;
+
+	for (var i = 0; i < children.length; i++) {
+		children[i].style.display = 'none';
+	}
+
+	var popoutMenuItemButtons = document.getElementById('popoutMenuItemButtons');
+	popoutCardContainers.style.display = 'none';
+	popoutMenuItemButtons.style.display = 'flex';
+}
 
 //// TOOLS ITEM CLICK
 async function handleChattyClick() {
-	console.log('Chatty clicked');
+	// console.log('Chatty clicked');
 	aiConfig = chattyConfig;
 	loadAIConfig();
 }
 async function handleChickenClick() {
-	console.log('Chicken clicked');
+	// console.log('Chicken clicked');
 	aiConfig = chickenConfig;
 	loadAIConfig();
 }
 async function handleSummarizerClick() {
-	console.log('Summarizer clicked');
+	// console.log('Summarizer clicked');
 	aiConfig = summarizerConfig;
 	loadAIConfig();
 }
 async function handleArticulatorClick() {
-	console.log('Articulator clicked');
+	// console.log('Articulator clicked');
 	aiConfig = articulatorConfig;
 	loadAIConfig();
 }
@@ -942,7 +1036,7 @@ async function handleGuideGettingStarted() {
 async function handleGuideMemoryUsage() {
 	const overlayJSON = {
 		title: 'Getting started with Compass AI',
-		image: 'assets/guides/Memory Usage.gifa',
+		image: 'assets/guides/Memory Usage.gif',
 		description: 'Memories can be used for instructing the AI to do different things.',
 		altText: `
     ### How to use a Memory
@@ -965,7 +1059,6 @@ async function handlePopoutMenuItemLoading() {
 }
 
 // REACT
-
 function guideShowOverlay(jsonHelpBody, parentOfHelpButton) {
 	const mainWrapper = document.getElementById('main-wrapper');
 	let overlayContainer = null;
@@ -1066,26 +1159,227 @@ function guideShowOverlay(jsonHelpBody, parentOfHelpButton) {
 }
 
 // DOC LOADED
-async function handleCloseMenuItem() {
-	console.log('TEST BUTTON PRESSED...');
-	console.log('MENU BUTTON CLICKED');
+function loadTermsOfService() {
+	// VARIABLES
 
-	var popoutCardContainers = document.getElementById('popoutCardContainers');
-	var children = popoutCardContainers.children;
+	const containerBorder = '3px solid';
 
-	for (var i = 0; i < children.length; i++) {
-		children[i].style.display = 'none';
+	// CONTAINERS
+	const tosWrapper = document.createElement('div');
+	const tosContainer = document.createElement('div');
+	const tosLogoContainer = document.createElement('div');
+	const tosTermsContainer = document.createElement('div');
+	const tosCheckboxContainer = document.createElement('div');
+	const tosButtonsContainer = document.createElement('div');
+	const tosVersionContainer = document.createElement('div');
+	const tosPatreonContainer = document.createElement('div');
+
+	// CONTAINER CONFIGURATIONS
+	setStyles(tosWrapper, {
+		id: 'tosWrapper',
+		display: 'flex',
+		position: 'absolute',
+		height: '100%',
+		width: '100%',
+		backgroundColor: 'rgba(255,255,255,0.5)',
+		zIndex: '9999',
+		top: '0',
+		left: '0',
+		justifyContent: 'center',
+		alignItems: 'center',
+	});
+
+	setStyles(tosContainer, {
+		display: 'flex',
+		flexDirection: 'column',
+		height: '90%',
+		width: '90%',
+		backgroundColor: 'white',
+		borderRadius: '10px',
+		border: containerBorder,
+	});
+
+	// LOGO ELEMENTS
+
+	setStyles(tosLogoContainer, {
+		display: 'flex',
+		flexDirection: 'column',
+		alignItems: 'center',
+		justifyContent: 'center',
+		padding: '10px',
+		height: 'max-content',
+		width: '100%',
+	});
+	const tosLogoImage = document.createElement('img');
+	tosLogoImage.src = 'assets/icon/Compass_AI_Logo_Icon.png';
+	setStyles(tosLogoImage, {
+		display: 'flex',
+		flexDirection: 'column',
+		padding: '10px',
+		height: 'auto',
+		width: '20%',
+		borderRadius: '10px',
+		minHeight: '80px',
+		minWidth: '80px',
+	});
+	const tosLogoText = document.createElement('label');
+	tosLogoText.innerText = 'COMPASS AI';
+	setStyles(tosLogoText, {
+		display: 'flex',
+		fontSize: '30px',
+	});
+	const tosLogoMotto = document.createElement('label');
+	tosLogoMotto.innerText = 'AI Personal Assistance';
+	setStyles(tosLogoMotto, {
+		display: 'flex',
+		fontSize: '20px',
+	});
+
+	tosLogoContainer.appendChild(tosLogoImage);
+	tosLogoContainer.appendChild(tosLogoText);
+	tosLogoContainer.appendChild(tosLogoMotto);
+
+	// TERMS ELEMENTS
+
+	setStyles(tosTermsContainer, {
+		display: 'flex',
+		padding: '10px',
+		height: '100%',
+		width: '100%',
+		borderBottom: containerBorder,
+		borderTop: containerBorder,
+		justifyContent: 'center',
+		alignItems: isMobileScreen() ? 'flex-start' : 'center', // Conditionally set alignItems based on the screen width
+		overflowY: 'auto',
+	});
+	const tosTermsText = document.createElement('label');
+	const tosTermsTextMarkdown = `# Terms of Service
+
+	1. This is an experimental tool that uses OpenAI's NLP API.
+	2. Information returned by the tool may not always be accurate or reliable.
+	3. The tool should be used for informational purposes only and should not be considered as professional advice.
+	
+	## Disclaimer
+	
+	1. OpenAI does not guarantee the correctness, completeness, or usefulness of the information provided.
+	2. This is an Alpha version of the tool, and frequent updates and improvements are expected.
+	3. Users are responsible for verifying the accuracy of the information obtained through the tool.
+	4. Any actions taken based on the information provided by the tool are at the user's own risk.
+	
+	---
+	
+	By agreeing to these terms and conditions, you are also agreeing to [OpenAI's terms and conditions](https://openai.com/policies).
+	`
+		.trim()
+		.replace(/^\t+/gm, '');
+	tosTermsText.innerHTML = marked.parse(tosTermsTextMarkdown);
+	tosTermsContainer.appendChild(tosTermsText);
+
+	// PATREON CONTAINER ELEMENTS
+
+	setStyles(
+		tosPatreonContainer,
+		{
+			display: 'flex',
+			flexDirection: 'column',
+			padding: '10px',
+			height: '200px',
+			width: '100%',
+			justifyContent: 'center',
+			alignItems: 'center',
+			textAlign: 'center',
+		},
+		'Click the Patreon button to support Compass AI',
+	);
+	const desiredWidth = isMobileScreen() ? '125' : '250';
+	const aspectRatio = 5834 / 1188;
+	const calculatedHeight = Math.round(desiredWidth / aspectRatio);
+	const tosPatreonLogo = document.createElement('button');
+	tosPatreonLogo.style.backgroundImage = `url(assets/patreon/Digital-Patreon-Wordmark_FieryCoral.png)`;
+	setStyles(tosPatreonLogo, {
+		padding: '10px',
+		height: `${calculatedHeight}px`,
+		width: `${desiredWidth}px`,
+		borderRadius: '10px',
+		border: 'none',
+		cursor: 'pointer',
+		backgroundSize: 'cover',
+		backgroundColor: 'transparent',
+	});
+	tosPatreonLogo.addEventListener('click', function () {
+		window.open('https://www.patreon.com/CompassAI', '_blank');
+	});
+	tosPatreonContainer.appendChild(tosPatreonLogo);
+
+	// BUTTONS CONTAINER ELEMENTS
+
+	setStyles(tosButtonsContainer, {
+		display: 'flex',
+		flexDirection: 'column',
+		padding: '10px',
+		height: '200px',
+		width: '100%',
+		justifyContent: 'center',
+		alignItems: 'center',
+		textAlign: 'center',
+		borderTop: containerBorder,
+	});
+	const tosButtonsAcceptTos = document.createElement('button');
+	setStyles(tosButtonsAcceptTos, {
+		padding: '10px',
+		height: '50px',
+		width: 'auto',
+		borderRadius: '10px',
+		border: 'none',
+		cursor: 'pointer',
+		justifyContent: 'center',
+		alignItems: 'center',
+	});
+	tosButtonsAcceptTos.innerText = 'Accept Terms & Conditions';
+	tosButtonsAcceptTos.addEventListener('click', function () {
+		localStorage.setItem('acceptedTos', 'true');
+		tosWrapper.style.display = 'none';
+	});
+	tosButtonsContainer.appendChild(tosButtonsAcceptTos);
+
+	// Check if the user has already accepted the terms
+	const hasAcceptedTos = localStorage.getItem('acceptedTos');
+
+	if (hasAcceptedTos) {
+		tosWrapper.style.display = 'none';
 	}
 
-	var popoutMenuItemButtons = document.getElementById('popoutMenuItemButtons');
-	popoutCardContainers.style.display = 'none';
-	popoutMenuItemButtons.style.display = 'flex';
+	// APPEND EVERYTHING TOGETHER
+	tosWrapper.appendChild(tosContainer);
+	tosContainer.appendChild(tosLogoContainer);
+	tosContainer.appendChild(tosTermsContainer);
+	tosContainer.appendChild(tosPatreonContainer);
+	tosContainer.appendChild(tosButtonsContainer);
+
+	// LEFTOVERS
+
+	// setStyles(tosCheckboxContainer, {
+	// 	display: 'flex',
+	// 	padding: '10px',
+	// 	height: '100%',
+	// 	width: '100%',
+	// 	backgroundColor: getRandomColor(),
+	// 	borderRadius: '10px',
+	// });
+
+	// setStyles(tosVersionContainer, {
+	// 	display: 'flex',
+	// 	padding: '10px',
+	// 	height: '100%',
+	// 	width: '100%',
+	// 	backgroundColor: getRandomColor(),
+	// 	borderRadius: '10px',
+	// });
+
+	return tosWrapper;
 }
-
-// PRE LOAD CONFIGURATIONS
-
 function setVariables() {
-	console.log('SETTING VARIABLES NOW');
+	// console.log('SETTING VARIABLES NOW');
 	aiName = aiConfig['ai-name'];
 	aiPersonality = aiConfig['ai-personality'];
 	aiGoals = aiConfig['ai-goals'];
@@ -1098,7 +1392,7 @@ function setVariables() {
 	memoriesDivContainer = selectById('memories');
 	aiConfigFile = 'aiconfig-' + aiName;
 	currentConversationID = aiConfig.conversations[0].id;
-	console.log(' - CURRENT CONVERSATION ID: ' + currentConversationID);
+	// console.log(' - CURRENT CONVERSATION ID: ' + currentConversationID);
 }
 function setUpEventListeners() {
 	document.addEventListener('click', (event) => {});
@@ -1106,7 +1400,7 @@ function setUpEventListeners() {
 	// Form submit button
 	const submitButton = document.getElementById('submit-button');
 	submitButton.addEventListener('click', handleSubmitButtonClick);
-	console.log('MENU LOADED SUCCESSFULLY...');
+	// console.log('MENU LOADED SUCCESSFULLY...');
 
 	// Form input field
 	const formInputField = document.getElementById('user-input'); // replace 'input-field' with the ID of your input field
@@ -1160,10 +1454,9 @@ function setUpEventListeners() {
 		});
 	});
 }
-async function checkAndLoadAiConfig() {}
 
 document.addEventListener('DOMContentLoaded', () => {
-	console.log('COMPASS AI DOCUMENT LOADED...');
+	//console.log('COMPASS AI DOCUMENT LOADED...');
 	//console.log = function () {};
 	console.warn = function () {};
 
@@ -1199,5 +1492,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		},
 	});
 	// Check if AI config file exists
+
+	selectById('main-wrapper').appendChild(loadTermsOfService());
 	loadAIConfig();
 });

@@ -3,12 +3,9 @@ body {
     font-family: Arial, sans-serif;
 }
 
-#settingsContainer {
-    padding: 10px;
-	color:black;
-}
 
 #settings {
+    padding: 10px;
     width: 100%;
 }
 
