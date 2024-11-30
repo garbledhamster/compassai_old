@@ -1,4 +1,4 @@
-import { generateGUID, countTokens, trimMessage, extractUrl, extractText, createChunkedText,  } from '/js/general.js';
+import { generateGUID, countTokens, trimMessage, extractUrl, extractText, createChunkedText,  } from '/compassai_old/js/general.js';
 
 export function isMemoryDuplicate(memory) {
   //console.log('CHECKING IF MEMORY IS A DUPLICATE');
