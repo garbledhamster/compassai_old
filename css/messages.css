@@ -1,0 +1,71 @@
+#tool-output-inner {
+  --hue-increment: 72; /* For 5 different hues */
+  --hue-start: 150; /* Starting hue for iMessage-like user bubbles */
+  --saturation: 60%;
+  --lightness: 50%;
+  --bg-color: #F8F8F2;
+  --text-color: white;
+}
+
+
+h1{ font-size:24px; }
+h2{ font-size:22px; }
+h3{ font-size:20px; }
+h4{ font-size:18px; }
+h5{ font-size:16px; }
+h6{ font-size:14px; }
+
+
+
+.user-message,
+.assistant-message,
+.system-message,
+.error-message,
+.console-message {
+  text-align: left;
+  padding: 10px;
+  border-radius: 5px;
+  font-size: 14px;
+  max-width: 66%; /* Limit the width of messages */
+  width: 100%;
+}
+
+
+
+.user-message {
+  color: var(--text-color);
+  background-color: hsl(calc(var(--hue-start) + 1 * var(--hue-increment)), var(--saturation), var(--lightness));
+}
+
+.assistant-message {
+  color: var(--text-color);
+  background-color: hsl(calc(var(--hue-start) + 2 * var(--hue-increment)), 0%, 47%);
+}
+
+.system-message {
+  color: var(--text-color);
+  background-color: hsl(calc(var(--hue-start) + 3 * var(--hue-increment)), var(--saturation), var(--lightness));
+}
+
+.error-message {
+  color: var(--text-color);
+  background-color: hsl(calc(var(--hue-start) + 4 * var(--hue-increment)), var(--saturation), var(--lightness));
+}
+
+.console-message {
+  color: var(--text-color);
+  background-color: hsl(calc(var(--hue-start) + 5 * var(--hue-increment)), var(--saturation), var(--lightness));
+}
+
+
+
+@media only screen and (max-width: 767px) {
+  .user-message,
+  .assistant-message,
+  .system-message,
+  .error-message,
+  .console-message {
+    max-width: 100%;
+    width: 95%;
+  }
+}

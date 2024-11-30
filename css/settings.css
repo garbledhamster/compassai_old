@@ -1,0 +1,65 @@
+/* General Settings */
+body {
+    font-family: Arial, sans-serif;
+}
+
+
+#settings {
+    padding: 10px;
+    width: 100%;
+}
+
+.settingContainer {
+	display: flex;
+    background-color: #f4f4f4;
+    border: 1px solid #e1e1e1;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+.settingHeaderContainer {
+    background-color: #ddd;
+	font-weight: bold;
+    padding: 10px;
+    border-bottom: 1px solid #e1e1e1;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    display: flex;
+    align-items: center;
+	min-width: 200px;
+	max-width: 200px;
+}
+
+.settingIcon {
+    margin-right: 10px;
+}
+
+.settingText {
+
+}
+
+.settingBody {
+    padding: 10px;
+}
+
+/* User Information Settings */
+#settingUserData {
+    /* Custom styling for user data section can go here */
+}
+
+/* Theme Settings */
+#settingThemes {
+    /* Custom styling for theme settings section can go here */
+}
+
+.settingBodyWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #ddd;
+    padding: 10px 0;
+}
+
+.settingBodyWrapper:last-child {
+    border-bottom: none;
+}
