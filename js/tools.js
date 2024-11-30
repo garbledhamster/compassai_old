@@ -40,6 +40,11 @@ function saveAIConfig() {
   }
 }
 
+function setObjectAiConfig(key, value) {
+  aiConfig[key] = value;
+  saveAIConfig();
+}
+
 async function loadAIConfig() {
   try {
     aiConfig = chattyConfig;
@@ -215,6 +220,7 @@ async function SummarizeChunksOpenAI(chunksToSummarize) {
 async function getConversationHistory(limit = null) {
   const conversations = getObjectAiConfig('conversations');
   const conversation = conversations.find(convo => convo.id === currentConversationID);
+  if (!conversation) return [];
   let chatHistory = conversation.messages.filter(message => !message.ignore).map(({ role, content }) => ({ role, content }));
   if (limit !== null && limit < chatHistory.length) chatHistory = chatHistory.slice(-limit);
   return chatHistory;
@@ -234,7 +240,7 @@ function loadConversations() {
 
 function newConversation(title) {
   const newConvo = { id: generateGUID(), title, timestamp: new Date().toISOString(), tokens: 0, messages: [] };
-  const conversations = getObjectAiConfig('conversations');
+  const conversations = getObjectAiConfig('conversations') || [];
   conversations.push(newConvo);
   setObjectAiConfig('conversations', conversations);
   currentConversationID = newConvo.id;
@@ -244,7 +250,7 @@ function newConversation(title) {
 
 function appendMessageAiConfig(message) {
   if (getObjectAiConfig('id', message.id)) return;
-  const conversations = getObjectAiConfig('conversations');
+  const conversations = getObjectAiConfig('conversations') || [];
   const convoIndex = conversations.findIndex(convo => convo.id === currentConversationID);
   if (convoIndex !== -1) {
     conversations[convoIndex].messages.push(message);
@@ -297,10 +303,12 @@ async function createAssistantBubble(message) {
 }
 
 function loadMemories() {
-  const memories = aiConfig['memories'];
+  const memories = aiConfig['memories'] || [];
   const memoriesContainer = domCache.memoriesContainer;
   if (memoriesContainer) {
     while (memoriesContainer.firstChild) memoriesContainer.removeChild(memoriesContainer.firstChild);
+    memories.forEach(memory => appendMemoryBubble(memory));
+  } else {
     memories.forEach(memory => appendMemoryBubble(memory));
   }
 }
@@ -372,7 +380,7 @@ function handleDeleteButtonClick(memory) {
 }
 
 async function getImportantMemories(limit = null) {
-  let importantMemories = aiConfig.memories.filter(memory => memory.important);
+  const importantMemories = aiConfig.memories.filter(memory => memory.important);
   let memoryMessages = importantMemories.map(memory => ({ role: 'system', content: memory.content }));
   if (limit !== null && limit < memoryMessages.length) memoryMessages = memoryMessages.slice(-limit);
   return memoryMessages;
@@ -399,9 +407,15 @@ async function TestButton() {
 
 async function handleHistoryToggleButton() {
   const toggleButton = selectById('chatHistoryToggle');
-  if (chatHistoryToggle === 'infinite') chatHistoryToggle = 'aiLastOutput';
-  else if (chatHistoryToggle === 'aiLastOutput') { chatHistoryToggle = 'currentInput'; toggleButton.innerHTML = '&#x1F4D7;'; }
-  else { chatHistoryToggle = 'infinite'; toggleButton.innerHTML = '&#x267E;&#xFE0F;'; }
+  if (chatHistoryToggle === 'infinite') {
+    chatHistoryToggle = 'aiLastOutput';
+  } else if (chatHistoryToggle === 'aiLastOutput') {
+    chatHistoryToggle = 'currentInput';
+    toggleButton.innerHTML = '&#x1F4D7;';
+  } else {
+    chatHistoryToggle = 'infinite';
+    toggleButton.innerHTML = '&#x267E;&#xFE0F;';
+  }
 }
 
 async function handleMemoryCreation(e) {
@@ -439,14 +453,29 @@ async function handleResetButtonClick() {
   promptBox.appendChild(noButton);
   overlay.appendChild(promptBox);
   document.body.appendChild(overlay);
-  yesButton.addEventListener('click', () => { localStorage.clear(); sessionStorage.clear(); document.cookie.split('; ').forEach(cookie => { const eqPos = cookie.indexOf('='); const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie; document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT'; }); alert('Compass AI has been cleared and reset!'); location.reload(); });
-  noButton.addEventListener('click', () => { document.body.removeChild(overlay); });
+  yesButton.addEventListener('click', () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    document.cookie.split('; ').forEach(cookie => {
+      const eqPos = cookie.indexOf('=');
+      const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+      document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    });
+    alert('Compass AI has been cleared and reset!');
+    location.reload();
+  });
+  noButton.addEventListener('click', () => {
+    document.body.removeChild(overlay);
+  });
 }
 
 async function handleShortcutCloseToolButton() {
   const { popoutCardContainers, popoutMenuItemButtons, shortcutCloseToolButton } = domCache;
   let visibleChildExists = false;
-  Array.from(popoutCardContainers.children).forEach(child => { if (child.style.display !== 'none') visibleChildExists = true; child.style.display = 'none'; });
+  Array.from(popoutCardContainers.children).forEach(child => {
+    if (child.style.display !== 'none') visibleChildExists = true;
+    child.style.display = 'none';
+  });
   popoutCardContainers.style.display = 'none';
   popoutMenuItemButtons.style.display = '';
   shortcutCloseToolButton.style.boxShadow = '';
@@ -472,7 +501,21 @@ async function handleGuidesItemClick() {
 }
 
 async function handleMemoriesItemClick() {
-  handleGuidesItemClick();
+  const { popoutCardContainers, popoutMenuItemButtons } = domCache;
+  const menuItemCardContainer = selectById('memoriesContainer');
+  if (menuItemCardContainer.style.display === 'none' || menuItemCardContainer.style.display === '') {
+    popoutCardContainers.style.display = '';
+    menuItemCardContainer.style.display = '';
+    popoutMenuItemButtons.style.display = 'none';
+    menuItemCardContainer.classList.add('appear');
+  } else {
+    setTimeout(() => {
+      menuItemCardContainer.style.display = 'none';
+      popoutCardContainers.style.display = 'none';
+      popoutMenuItemButtons.style.display = '';
+      menuItemCardContainer.classList.remove('appear');
+    }, 300);
+  }
   loadMemories();
 }
 
@@ -495,7 +538,21 @@ async function handleToolsItemClick() {
 }
 
 async function handleConversationsItemClick() {
-  handleGuidesItemClick();
+  const { popoutCardContainers, popoutMenuItemButtons } = domCache;
+  const menuItemCardContainer = selectById('conversationsContainer');
+  if (menuItemCardContainer.style.display === 'none' || menuItemCardContainer.style.display === '') {
+    popoutCardContainers.style.display = '';
+    menuItemCardContainer.style.display = '';
+    popoutMenuItemButtons.style.display = 'none';
+    menuItemCardContainer.classList.add('appear');
+  } else {
+    setTimeout(() => {
+      menuItemCardContainer.style.display = 'none';
+      popoutCardContainers.style.display = 'none';
+      popoutMenuItemButtons.style.display = '';
+      menuItemCardContainer.classList.remove('appear');
+    }, 300);
+  }
 }
 
 async function handleSettingsItemClick() {
@@ -582,6 +639,29 @@ function guideShowOverlay(jsonHelpBody, parentOfHelpButton) {
   }
 }
 
+function handleGuideGettingStarted() {
+  const overlayJSON = {
+    title: 'Getting started with Compass AI',
+    image: '/compassai_old/assets/guides/Getting Started.gif',
+    description: 'To get started, simply enter a message in the chat to start a conversation.',
+    altText: '1. Open the menu.\n2. Click the reset icon (which looks like a circular arrow).\n3. A confirmation overlay will show. Click "Yes" to clear the app settings.',
+  };
+  guideShowOverlay(overlayJSON);
+}
+
+function handleGuideMemoryUsage() {
+  const overlayJSON = {
+    title: 'Memory Usage in Compass AI',
+    image: '/compassai_old/assets/guides/Memory Usage.gif',
+    description: 'Memories can be used for instructing the AI to perform various tasks.',
+    altText: `### How to use a Memory
+1. Open the menu.
+2. Click the memory icon.
+3. Add or manage your memories as needed.`,
+  };
+  guideShowOverlay(overlayJSON);
+}
+
 function loadTermsOfService() {
   const tosWrapper = document.createElement('div');
   const tosContainer = document.createElement('div');
@@ -593,8 +673,8 @@ function loadTermsOfService() {
   setStyles(tosContainer, { display: 'flex', flexDirection: 'column', height: '90%', width: '90%', backgroundColor: 'white', borderRadius: '10px', border: '3px solid' });
   setStyles(tosLogoContainer, { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px', height: 'max-content', width: '100%' });
   const tosLogoImage = document.createElement('img');
-  tosLogoImage.src = 'assets/icon/Compass_AI_Logo_Icon.png';
-  setStyles(tosLogoImage, { display: 'flex', flexDirection: 'column', padding: '10px', height: 'auto', width: '20%', borderRadius: '10px', minHeight: '80px', minWidth: '80px' });
+  tosLogoImage.src = '/compassai_old/assets/icon/Compass_AI_Logo_Icon.png';
+  setStyles(tosLogoImage, { display: 'flex', padding: '10px', height: 'auto', width: '20%', borderRadius: '10px', minHeight: '80px', minWidth: '80px' });
   const tosLogoText = document.createElement('label');
   tosLogoText.innerText = 'COMPASS AI';
   setStyles(tosLogoText, { display: 'flex', fontSize: '30px' });
@@ -616,7 +696,7 @@ function loadTermsOfService() {
 3. Users are responsible for verifying the accuracy of the information obtained through the tool.
 4. Any actions taken based on the information provided by the tool are at the user's own risk.
 ---
-By agreeing to these terms and conditions, you are also agreeing to [OpenAI's terms and conditions](https://openai.com/terms).`.trim().replace(/^\t+/gm, '');
+By agreeing to these terms and conditions, you are also agreeing to [OpenAI's terms and conditions](https://openai.com/terms).`.trim();
   tosTermsText.innerHTML = marked.parse(tosTermsTextMarkdown);
   tosTermsContainer.appendChild(tosTermsText);
   setStyles(tosPatreonContainer, { display: 'flex', flexDirection: 'column', padding: '10px', height: '200px', width: '100%', justifyContent: 'center', alignItems: 'center', textAlign: 'center' });
@@ -624,7 +704,7 @@ By agreeing to these terms and conditions, you are also agreeing to [OpenAI's te
   const aspectRatio = 5834 / 1188;
   const calculatedHeight = Math.round(parseInt(desiredWidth) / aspectRatio);
   const tosPatreonLogo = document.createElement('button');
-  tosPatreonLogo.style.backgroundImage = `url(assets/patreon/Digital-Patreon-Wordmark_FieryCoral.png)`;
+  tosPatreonLogo.style.backgroundImage = `url(/compassai_old/assets/patreon/Digital-Patreon-Wordmark_FieryCoral.png)`;
   setStyles(tosPatreonLogo, { padding: '10px', height: `${calculatedHeight}px`, width: `${desiredWidth}`, borderRadius: '10px', border: 'none', cursor: 'pointer', backgroundSize: 'cover', backgroundColor: 'transparent' });
   tosPatreonLogo.addEventListener('click', () => { window.open('https://patreon.com/compassai'); });
   tosPatreonContainer.appendChild(tosPatreonLogo);
@@ -655,7 +735,7 @@ function setVariables() {
   aiTone = aiConfig['ai tone'];
   memoriesDivContainer = selectById('memories');
   aiConfigFile = aiConfigFilePrefix + aiName;
-  currentConversationID = aiConfig.conversations[0]?.id || generateGUID();
+  currentConversationID = aiConfig.conversations && aiConfig.conversations[0] ? aiConfig.conversations[0].id : generateGUID();
 }
 
 function setUpEventListeners() {
