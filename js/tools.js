@@ -1,10 +1,10 @@
-import { chattyConfig } from 'https://garbledhamster.github.io/compassai_old/js/tools/chatty.js';
-import { summarizerConfig } from 'https://garbledhamster.github.io/compassai_old/js/tools/summarizer.js';
-import { articulatorConfig } from 'https://garbledhamster.github.io/compassai_old/js/tools/articulator.js';
-import { chickenConfig } from 'https://garbledhamster.github.io/compassai_old/js/tools/chicken.js';
-import { guideOverlayContainer, guideOverlayContent, guideImageContainer, guideCloseButton } from 'https://garbledhamster.github.io/compassai_old/js/react/guide.js';
-import { isMemoryDuplicate, newMemory } from 'https://garbledhamster.github.io/compassai_old/js/memories.js';
-import { generateGUID, countTokens, trimMessage, extractUrl, extractText, createChunkedText, getRandomColor, isMobileScreen, setStyles } from '/https://garbledhamster.github.io/compassai_old/js/general.js';
+import { chattyConfig } from '/js/tools/chatty.js';
+import { summarizerConfig } from '/js/tools/summarizer.js';
+import { articulatorConfig } from '/js/tools/articulator.js';
+import { chickenConfig } from '/js/tools/chicken.js';
+import { guideOverlayContainer, guideOverlayContent, guideImageContainer, guideCloseButton } from '/js/react/guide.js';
+import { isMemoryDuplicate, newMemory } from '/js/memories.js';
+import { generateGUID, countTokens, trimMessage, extractUrl, extractText, createChunkedText, getRandomColor, isMobileScreen, setStyles } from '//js/general.js';
 
 // AI CONFIG CONTROLS //
 
