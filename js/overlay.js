@@ -56,9 +56,9 @@ function init() {
 	checkDevSite.textContent = 'Check out our development site for updates and more:';
 
 	var devSite = document.createElement('a');
-	devSite.href = 'https://ourtech.space/dev';
+	devSite.href = 'https://joerice.me';
 	devSite.target = '_blank';
-	devSite.textContent = 'OurTech Dev Site';
+	devSite.textContent = 'My personal website with my other projects.';
 
 	var checkboxLabel = document.createElement('label');
 	var checkbox = document.createElement('input');

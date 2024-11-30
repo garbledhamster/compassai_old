@@ -88,7 +88,7 @@ const HelpOverlay = ({ config }) => {
 
 const factoryResetConfig = {
   title: "How to factory reset the app",
-  image: "https://example.com/factory-reset.gif",
+  image: "/compass_old/assets/guides/Reset_to_Defaults.gif",
   description:
     'To reset the app, follow these steps:\n\n1. Open the menu.\n2. Click the <i class="fi-rr-rotate"></i> icon.\n3. A confirmation overlay will show. Click "Yes" to clear the app settings.',
   altText: '1. Open the menu.\n2. Click the reset icon (which looks like a circular arrow).\n3. A confirmation overlay will show. Click "Yes" to clear the app settings.',
@@ -96,7 +96,7 @@ const factoryResetConfig = {
 
 const usingMemoriesConfig = {
   title: "How to use the Memories system",
-  image: "https://example.com/using-memories.gif",
+  image: "/compass_old/assets/guides/Memory_Usage.gif",
   description: 'Memories can be stored by selecting the text you want to remember and clicking the <i class="fi-rr-bookmark"></i> button in the hotbar.',
   altText: `1. Highlight text you want to store.\n
              2. Open the menu with the <i class="fi-rr-menu-dots"></i> icon.\n
@@ -107,7 +107,7 @@ const usingMemoriesConfig = {
 
 const usingStoredMemoriesConfig = {
   title: "How to use stored Memories",
-  image: "https://example.com/using-stored-memories.gif",
+  image: "/compass_old/assets/guides/Getting_Started.gif",
   description: `Memories are instructions that can be sent to the AI. For example: 
                  1. Ask for a summary of a book.
                  2. Get recommendations based on your preferences.
