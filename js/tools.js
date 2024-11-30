@@ -6,18 +6,14 @@ import { guideOverlayContainer, guideOverlayContent, guideImageContainer, guideC
 import { isMemoryDuplicate, newMemory } from '/compassai_old/js/memories.js';
 import { generateGUID, countTokens, trimMessage, extractUrl, extractText, createChunkedText, getRandomColor, isMobileScreen, setStyles } from '/compassai_old/js/general.js';
 
-// Configuration Constants
 const aiConfigFilePrefix = 'aiconfig-';
+let aiConfig = '';
 const maxTokens = 8192;
 const maxRetries = 3;
 const memoriesToPull = 5;
-
-// State Variables
-let aiConfig = '';
 let chatHistoryToggle = 'infinite';
 let aiName, aiPersonality, aiGoals, outputFormats, outputFormatTemplates, inputFormats, aiContext, aiDomainExpertise, aiTone, aiConfigFile, memoriesDivContainer, menuHTML, memoriesHTML, conversationsHTML, settingsHTML, toolsHTML, currentConversationID;
 
-// DOM Cache
 const domCache = {
   userInput: document.getElementById('user-input'),
   toolOutputInner: document.getElementById('tool-output-inner'),
@@ -28,7 +24,6 @@ const domCache = {
   mainWrapper: document.getElementById('main-wrapper'),
 };
 
-// Utility Functions
 function selectById(id) {
   return document.getElementById(id);
 }
@@ -45,9 +40,20 @@ function saveAIConfig() {
   }
 }
 
-function setObjectAiConfig(key, value) {
-  aiConfig[key] = value;
-  saveAIConfig();
+async function loadAIConfig() {
+  try {
+    aiConfig = chattyConfig;
+    setVariables();
+    if (!checkAiConfigFileExists()) {
+      saveAIConfig();
+    }
+    aiConfig = JSON.parse(localStorage.getItem(aiConfigFilePrefix + aiName));
+    loadConversations();
+    loadMemories();
+    return aiConfig;
+  } catch (error) {
+    console.error('Error loading AI config:', error);
+  }
 }
 
 function getObjectAiConfig(keyName, lookup = null) {
@@ -69,7 +75,6 @@ function getObjectAiConfig(keyName, lookup = null) {
   return searchObject(JSON.parse(JSON.stringify(aiConfig)));
 }
 
-// Fetch Functions
 async function fetchData(jsonObjectBody, isStream = false) {
   try {
     const workerUrl = 'https://example.com/worker'; // Replace with actual URL
@@ -105,7 +110,7 @@ async function fetchData(jsonObjectBody, isStream = false) {
 }
 
 async function fetchUrlData(url) {
-  await createConsoleBubble('URL found. Fetching website data now.');
+  await createConsoleBubble('Url found. Fetching website data now.');
   try {
     const corsshBody = { option: 'corssh', corsshRequestBody: JSON.stringify({ url }) };
     const webdata = await fetchData(JSON.stringify(corsshBody), false);
@@ -208,16 +213,15 @@ async function SummarizeChunksOpenAI(chunksToSummarize) {
 }
 
 async function getConversationHistory(limit = null) {
-  const conversations = getObjectAiConfig('conversations') || [];
+  const conversations = getObjectAiConfig('conversations');
   const conversation = conversations.find(convo => convo.id === currentConversationID);
-  if (!conversation) return [];
   let chatHistory = conversation.messages.filter(message => !message.ignore).map(({ role, content }) => ({ role, content }));
   if (limit !== null && limit < chatHistory.length) chatHistory = chatHistory.slice(-limit);
   return chatHistory;
 }
 
 function loadConversations() {
-  const conversations = getObjectAiConfig('conversations') || [];
+  const conversations = getObjectAiConfig('conversations');
   const parent = domCache.toolOutputInner;
   while (parent.firstChild) parent.firstChild.remove();
   conversations.forEach(conversationObj => {
@@ -230,7 +234,7 @@ function loadConversations() {
 
 function newConversation(title) {
   const newConvo = { id: generateGUID(), title, timestamp: new Date().toISOString(), tokens: 0, messages: [] };
-  const conversations = getObjectAiConfig('conversations') || [];
+  const conversations = getObjectAiConfig('conversations');
   conversations.push(newConvo);
   setObjectAiConfig('conversations', conversations);
   currentConversationID = newConvo.id;
@@ -240,7 +244,7 @@ function newConversation(title) {
 
 function appendMessageAiConfig(message) {
   if (getObjectAiConfig('id', message.id)) return;
-  const conversations = getObjectAiConfig('conversations') || [];
+  const conversations = getObjectAiConfig('conversations');
   const convoIndex = conversations.findIndex(convo => convo.id === currentConversationID);
   if (convoIndex !== -1) {
     conversations[convoIndex].messages.push(message);
@@ -249,7 +253,6 @@ function appendMessageAiConfig(message) {
   }
 }
 
-// Chat Bubble Creation
 function buildChatBubble(message) {
   const currentDate = new Date(message.timestamp).getTime() > 0 ? new Date(message.timestamp).toLocaleString() : new Date().toLocaleString();
   const chatBubble = document.createElement('div');
@@ -263,7 +266,6 @@ function buildChatBubble(message) {
   return chatBubble;
 }
 
-// Bubble Creation Helpers
 async function createErrorBubble(message) {
   const currentDate = new Date().toLocaleString();
   const parent = domCache.toolOutputInner;
@@ -294,14 +296,11 @@ async function createAssistantBubble(message) {
   parent.prepend(buildChatBubble({ id: generateGUID(), role: 'assistant', timestamp: currentDate, ignore: false, tokens: await countTokens(message), content: message }));
 }
 
-// Memory Management
 function loadMemories() {
-  const memories = aiConfig['memories'] || [];
+  const memories = aiConfig['memories'];
   const memoriesContainer = domCache.memoriesContainer;
   if (memoriesContainer) {
     while (memoriesContainer.firstChild) memoriesContainer.removeChild(memoriesContainer.firstChild);
-    memories.forEach(memory => appendMemoryBubble(memory));
-  } else {
     memories.forEach(memory => appendMemoryBubble(memory));
   }
 }
@@ -312,54 +311,41 @@ function appendMemoryBubble(memory) {
   const memoryContainer = document.createElement('div');
   memoryContainer.id = `memoryContainer_${memory.id}`;
   memoryContainer.className = 'memory-container';
-
   const memoryToolbarContainer = document.createElement('div');
   memoryToolbarContainer.className = 'memory-toolbar-container';
-
   const memoryTitleContainer = document.createElement('div');
   memoryTitleContainer.className = 'memory-title-container';
-
   const memoryTitleIcon = document.createElement('div');
   memoryTitleIcon.className = 'memory-title-icon';
   memoryTitleIcon.innerHTML = memory.icon;
-
   const memoryTitleText = document.createElement('div');
   memoryTitleText.textContent = memory.title;
-
   const memoryButtonContainer = document.createElement('div');
   memoryButtonContainer.className = 'memory-button-container';
-
   const memoryImportanceButton = document.createElement('button');
   memoryImportanceButton.className = 'button';
   memoryImportanceButton.innerHTML = '&#x1F525;';
   memoryImportanceButton.style.backgroundColor = memory.important ? '#32CD32' : '';
   memoryImportanceButton.addEventListener('click', () => handleImportanceButtonClick(memory, memoryImportanceButton));
-
   const memoryDeleteButton = document.createElement('button');
   memoryDeleteButton.className = 'button';
   memoryDeleteButton.innerHTML = '&#x1F5D1;';
   memoryDeleteButton.addEventListener('click', () => handleDeleteButtonClick(memory));
-
   memoryButtonContainer.appendChild(memoryImportanceButton);
   memoryButtonContainer.appendChild(memoryDeleteButton);
-
   memoryTitleContainer.appendChild(memoryTitleIcon);
   memoryTitleContainer.appendChild(memoryTitleText);
-
   memoryToolbarContainer.appendChild(memoryTitleContainer);
   memoryToolbarContainer.appendChild(memoryButtonContainer);
-
   const memoryContentContainer = document.createElement('div');
   memoryContentContainer.className = 'memory-content-container';
   const memoryContent = document.createElement('label');
   memoryContent.className = 'memory-content';
   memoryContent.innerHTML = memory.content;
   memoryContentContainer.appendChild(memoryContent);
-
   const memoryFooter = document.createElement('footer');
   memoryFooter.className = 'memory-footer';
   memoryFooter.textContent = memory.timestamp;
-
   memoryContainer.appendChild(memoryToolbarContainer);
   memoryContainer.appendChild(memoryContentContainer);
   memoryContainer.appendChild(memoryFooter);
@@ -386,65 +372,41 @@ function handleDeleteButtonClick(memory) {
 }
 
 async function getImportantMemories(limit = null) {
-  const importantMemories = aiConfig.memories.filter(memory => memory.important);
+  let importantMemories = aiConfig.memories.filter(memory => memory.important);
   let memoryMessages = importantMemories.map(memory => ({ role: 'system', content: memory.content }));
   if (limit !== null && limit < memoryMessages.length) memoryMessages = memoryMessages.slice(-limit);
   return memoryMessages;
 }
 
-// Event Handlers
-async function handleSubmitButtonClick(event) {
-  event.preventDefault();
-  const [submitButton, userInput, toolOutputInner] = ['submit-button', 'user-input', 'tool-output-inner'].map(selectById);
-  let userInputText = userInput.value.trim();
-  if (userInputText === '') return; // Prevent empty submissions
-  const currentDate = new Date().toLocaleString();
-  const submitButtonText = submitButton.innerHTML;
-  let message = {
-    id: generateGUID(),
-    role: 'user',
-    timestamp: currentDate,
-    ignore: false,
-    tokens: countTokens(userInputText),
-    content: userInputText,
-  };
-  submitButton.disabled = true;
-  userInput.disabled = true;
-  submitButton.innerHTML = '<div class="loading-circle"></div>'; // You can style this loading indicator in CSS
-  await fetchCloudFlareMessage(message);
-  userInput.value = '';
-  submitButton.innerHTML = submitButtonText;
-  submitButton.disabled = false;
-  userInput.disabled = false;
+async function handlesShortcutClipboardButtonClick() {
+  const copiedText = Array.from(selectById('tool-output').children).map(child => child.textContent).join('\n');
+  if (copiedText.trim() !== '') navigator.clipboard.writeText(copiedText);
 }
 
-async function handleMenuButtonClick() {
-  const menuContainer = selectById('menu-container');
-  if (menuContainer.style.display === 'none' || menuContainer.style.display === '') {
-    menuContainer.style.display = 'flex';
-    menuContainer.style.flexDirection = 'column';
-  } else {
-    menuContainer.style.display = 'none';
+async function TestButton() {
+  try {
+    console.log('TESTING LAMBDA FUNCTION CORSSH');
+    const api = 'https://example.com/api'; // Replace with actual API URL
+    const url = 'https://example.com/url'; // Replace with actual URL
+    const body = { url };
+    const response = await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    console.log(await response.json());
+  } catch (error) {
+    console.error('An error occurred:', error.message);
   }
-  handleCloseMenuItem(); // Ensure this function is defined if used
 }
 
 async function handleHistoryToggleButton() {
   const toggleButton = selectById('chatHistoryToggle');
-  if (chatHistoryToggle === 'infinite') {
-    chatHistoryToggle = 'aiLastOutput';
-  } else if (chatHistoryToggle === 'aiLastOutput') {
-    chatHistoryToggle = 'currentInput';
-    toggleButton.innerHTML = '&#x1F4D7;'; // Book emoji
-  } else {
-    chatHistoryToggle = 'infinite';
-    toggleButton.innerHTML = '&#x267E;&#xFE0F;'; // Infinity emoji
-  }
+  if (chatHistoryToggle === 'infinite') chatHistoryToggle = 'aiLastOutput';
+  else if (chatHistoryToggle === 'aiLastOutput') { chatHistoryToggle = 'currentInput'; toggleButton.innerHTML = '&#x1F4D7;'; }
+  else { chatHistoryToggle = 'infinite'; toggleButton.innerHTML = '&#x267E;&#xFE0F;'; }
 }
 
 async function handleMemoryCreation(e) {
   e.preventDefault();
-  const selectedText = window.getSelection().toString().trim();
+  const selectedText = window.getSelection().toString();
   if (selectedText.length <= 0) return;
   const memoryButton = e.target;
   memoryButton.disabled = true;
@@ -467,41 +429,24 @@ async function handleResetButtonClick() {
   const promptText = document.createElement('p');
   promptText.textContent = 'Reset application to default settings?';
   const yesButton = document.createElement('button');
-  setStyles(yesButton, { marginRight: '10px' });
-  yesButton.className = 'button';
+  setStyles(yesButton, { marginRight: '10px', className: 'button' });
   yesButton.textContent = 'Yes';
   const noButton = document.createElement('button');
-  setStyles(noButton, {});
-  noButton.className = 'button';
+  setStyles(noButton, { className: 'button' });
   noButton.textContent = 'No';
   promptBox.appendChild(promptText);
   promptBox.appendChild(yesButton);
   promptBox.appendChild(noButton);
   overlay.appendChild(promptBox);
   document.body.appendChild(overlay);
-  yesButton.addEventListener('click', () => {
-    localStorage.clear();
-    sessionStorage.clear();
-    document.cookie.split('; ').forEach(cookie => {
-      const eqPos = cookie.indexOf('=');
-      const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
-      document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT';
-    });
-    alert('Compass AI has been cleared and reset!');
-    location.reload();
-  });
-  noButton.addEventListener('click', () => {
-    document.body.removeChild(overlay);
-  });
+  yesButton.addEventListener('click', () => { localStorage.clear(); sessionStorage.clear(); document.cookie.split('; ').forEach(cookie => { const eqPos = cookie.indexOf('='); const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie; document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT'; }); alert('Compass AI has been cleared and reset!'); location.reload(); });
+  noButton.addEventListener('click', () => { document.body.removeChild(overlay); });
 }
 
 async function handleShortcutCloseToolButton() {
   const { popoutCardContainers, popoutMenuItemButtons, shortcutCloseToolButton } = domCache;
   let visibleChildExists = false;
-  Array.from(popoutCardContainers.children).forEach(child => {
-    if (child.style.display !== 'none') visibleChildExists = true;
-    child.style.display = 'none';
-  });
+  Array.from(popoutCardContainers.children).forEach(child => { if (child.style.display !== 'none') visibleChildExists = true; child.style.display = 'none'; });
   popoutCardContainers.style.display = 'none';
   popoutMenuItemButtons.style.display = '';
   shortcutCloseToolButton.style.boxShadow = '';
@@ -582,23 +527,19 @@ async function handlePopoutMenuItemLoading() {
   selectById('guideMemoryUsage').addEventListener('click', handleGuideMemoryUsage);
 }
 
-// Guide Overlay Functions
 function guideShowOverlay(jsonHelpBody, parentOfHelpButton) {
   const { mainWrapper } = domCache;
   let overlayContainer, overlayRoot;
-  
   const handleShow = () => {
     overlayContainer = document.createElement('div');
     mainWrapper.appendChild(overlayContainer);
     overlayRoot = ReactDOM.createRoot(overlayContainer);
     renderOverlay();
   };
-  
   const handleHide = () => {
     overlayRoot.unmount();
     mainWrapper.removeChild(overlayContainer);
   };
-  
   const renderOverlay = () => {
     const overlay = React.createElement(
       guideOverlayContainer,
@@ -629,17 +570,7 @@ function guideShowOverlay(jsonHelpBody, parentOfHelpButton) {
     );
     overlayRoot.render(overlay);
   };
-  
-  const initialButton = React.createElement('button', { 
-    className: 'toggle-help-btn', 
-    onClick: handleShow, 
-    style: { 
-      position: 'absolute', top: '0', right: '0', width: '30px', height: '30px', 
-      backgroundColor: 'rgba(0,0,0,0.2)', border: 'none', borderRadius: '50%', 
-      margin: '10px', color: 'white', boxShadow: '0px 0px 10px 5px black' 
-    } 
-  }, '?');
-  
+  const initialButton = React.createElement('button', { className: 'toggle-help-btn', onClick: handleShow, style: { position: 'absolute', top: '0', right: '0', width: '30px', height: '30px', backgroundColor: 'rgba(0,0,0,0.2)', border: 'none', borderRadius: '50%', margin: '10px', color: 'white', boxShadow: '0px 0px 10px 5px black' } }, '?');
   if (parentOfHelpButton) {
     const helpButtonParent = document.getElementById(parentOfHelpButton);
     const buttonContainer = document.createElement('div');
@@ -651,30 +582,6 @@ function guideShowOverlay(jsonHelpBody, parentOfHelpButton) {
   }
 }
 
-function handleGuideGettingStarted() {
-  const overlayJSON = {
-    title: 'Getting started with Compass AI',
-    image: '/compassai_old/assets/guides/Getting Started.gif',
-    description: 'To get started, simply enter a message in the chat to start a conversation.',
-    altText: '1. Open the menu.\n2. Click the reset icon (which looks like a circular arrow).\n3. A confirmation overlay will show. Click "Yes" to clear the app settings.',
-  };
-  guideShowOverlay(overlayJSON);
-}
-
-function handleGuideMemoryUsage() {
-  const overlayJSON = {
-    title: 'Memory Usage in Compass AI',
-    image: '/compassai_old/assets/guides/Memory Usage.gif',
-    description: 'Memories can be used for instructing the AI to perform various tasks.',
-    altText: `### How to use a Memory
-1. Open the menu.
-2. Click the memory icon.
-3. Add or manage your memories as needed.`,
-  };
-  guideShowOverlay(overlayJSON);
-}
-
-// Terms of Service
 function loadTermsOfService() {
   const tosWrapper = document.createElement('div');
   const tosContainer = document.createElement('div');
@@ -682,49 +589,22 @@ function loadTermsOfService() {
   const tosTermsContainer = document.createElement('div');
   const tosButtonsContainer = document.createElement('div');
   const tosPatreonContainer = document.createElement('div');
-
-  setStyles(tosWrapper, { 
-    id: 'tosWrapper', display: 'flex', position: 'absolute', height: '100%', width: '100%', 
-    backgroundColor: 'rgba(255,255,255,0.5)', zIndex: '9999', top: '0', left: '0', 
-    justifyContent: 'center', alignItems: 'center' 
-  });
-  
-  setStyles(tosContainer, { 
-    display: 'flex', flexDirection: 'column', height: '90%', width: '90%', 
-    backgroundColor: 'white', borderRadius: '10px', border: '3px solid' 
-  });
-  
-  setStyles(tosLogoContainer, { 
-    display: 'flex', flexDirection: 'column', alignItems: 'center', 
-    justifyContent: 'center', padding: '10px', height: 'max-content', width: '100%' 
-  });
-  
+  setStyles(tosWrapper, { id: 'tosWrapper', display: 'flex', position: 'absolute', height: '100%', width: '100%', backgroundColor: 'rgba(255,255,255,0.5)', zIndex: '9999', top: '0', left: '0', justifyContent: 'center', alignItems: 'center' });
+  setStyles(tosContainer, { display: 'flex', flexDirection: 'column', height: '90%', width: '90%', backgroundColor: 'white', borderRadius: '10px', border: '3px solid' });
+  setStyles(tosLogoContainer, { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px', height: 'max-content', width: '100%' });
   const tosLogoImage = document.createElement('img');
-  tosLogoImage.src = '/compassai_old/assets/icon/Compass_AI_Logo_Icon.png';
-  setStyles(tosLogoImage, { 
-    display: 'flex', padding: '10px', height: 'auto', width: '20%', 
-    borderRadius: '10px', minHeight: '80px', minWidth: '80px' 
-  });
-  
+  tosLogoImage.src = 'assets/icon/Compass_AI_Logo_Icon.png';
+  setStyles(tosLogoImage, { display: 'flex', flexDirection: 'column', padding: '10px', height: 'auto', width: '20%', borderRadius: '10px', minHeight: '80px', minWidth: '80px' });
   const tosLogoText = document.createElement('label');
   tosLogoText.innerText = 'COMPASS AI';
   setStyles(tosLogoText, { display: 'flex', fontSize: '30px' });
-  
   const tosLogoMotto = document.createElement('label');
   tosLogoMotto.innerText = 'AI Personal Assistance';
   setStyles(tosLogoMotto, { display: 'flex', fontSize: '20px' });
-  
   tosLogoContainer.appendChild(tosLogoImage);
   tosLogoContainer.appendChild(tosLogoText);
   tosLogoContainer.appendChild(tosLogoMotto);
-  
-  setStyles(tosTermsContainer, { 
-    display: 'flex', padding: '10px', height: '100%', width: '100%', 
-    borderBottom: '3px solid', borderTop: '3px solid', 
-    justifyContent: 'center', alignItems: isMobileScreen() ? 'flex-start' : 'center', 
-    overflowY: 'auto' 
-  });
-  
+  setStyles(tosTermsContainer, { display: 'flex', padding: '10px', height: '100%', width: '100%', borderBottom: '3px solid', borderTop: '3px solid', justifyContent: 'center', alignItems: isMobileScreen() ? 'flex-start' : 'center', overflowY: 'auto' });
   const tosTermsText = document.createElement('label');
   const tosTermsTextMarkdown = `# Terms of Service
 1. This is an experimental tool that uses OpenAI's NLP API.
@@ -736,57 +616,33 @@ function loadTermsOfService() {
 3. Users are responsible for verifying the accuracy of the information obtained through the tool.
 4. Any actions taken based on the information provided by the tool are at the user's own risk.
 ---
-By agreeing to these terms and conditions, you are also agreeing to [OpenAI's terms and conditions](https://openai.com/terms).`.trim();
+By agreeing to these terms and conditions, you are also agreeing to [OpenAI's terms and conditions](https://openai.com/terms).`.trim().replace(/^\t+/gm, '');
   tosTermsText.innerHTML = marked.parse(tosTermsTextMarkdown);
   tosTermsContainer.appendChild(tosTermsText);
-  
-  setStyles(tosPatreonContainer, { 
-    display: 'flex', flexDirection: 'column', padding: '10px', height: '200px', 
-    width: '100%', justifyContent: 'center', alignItems: 'center', textAlign: 'center' 
-  });
-  
+  setStyles(tosPatreonContainer, { display: 'flex', flexDirection: 'column', padding: '10px', height: '200px', width: '100%', justifyContent: 'center', alignItems: 'center', textAlign: 'center' });
   const desiredWidth = isMobileScreen() ? '125px' : '250px';
   const aspectRatio = 5834 / 1188;
   const calculatedHeight = Math.round(parseInt(desiredWidth) / aspectRatio);
-  
   const tosPatreonLogo = document.createElement('button');
-  tosPatreonLogo.style.backgroundImage = `url(/compassai_old/assets/patreon/Digital-Patreon-Wordmark_FieryCoral.png)`;
-  setStyles(tosPatreonLogo, { 
-    padding: '10px', height: `${calculatedHeight}px`, width: `${desiredWidth}`, 
-    borderRadius: '10px', border: 'none', cursor: 'pointer', backgroundSize: 'cover', backgroundColor: 'transparent' 
-  });
+  tosPatreonLogo.style.backgroundImage = `url(assets/patreon/Digital-Patreon-Wordmark_FieryCoral.png)`;
+  setStyles(tosPatreonLogo, { padding: '10px', height: `${calculatedHeight}px`, width: `${desiredWidth}`, borderRadius: '10px', border: 'none', cursor: 'pointer', backgroundSize: 'cover', backgroundColor: 'transparent' });
   tosPatreonLogo.addEventListener('click', () => { window.open('https://patreon.com/compassai'); });
   tosPatreonContainer.appendChild(tosPatreonLogo);
-  
-  setStyles(tosButtonsContainer, { 
-    display: 'flex', flexDirection: 'column', padding: '10px', height: '200px', width: '100%', 
-    justifyContent: 'center', alignItems: 'center', textAlign: 'center', borderTop: '3px solid' 
-  });
-  
+  setStyles(tosButtonsContainer, { display: 'flex', flexDirection: 'column', padding: '10px', height: '200px', width: '100%', justifyContent: 'center', alignItems: 'center', textAlign: 'center', borderTop: '3px solid' });
   const tosButtonsAcceptTos = document.createElement('button');
-  setStyles(tosButtonsAcceptTos, { 
-    padding: '10px', height: '50px', width: 'auto', borderRadius: '10px', 
-    border: 'none', cursor: 'pointer' 
-  });
+  setStyles(tosButtonsAcceptTos, { padding: '10px', height: '50px', width: 'auto', borderRadius: '10px', border: 'none', cursor: 'pointer' });
   tosButtonsAcceptTos.innerText = 'Accept Terms & Conditions';
-  tosButtonsAcceptTos.addEventListener('click', () => { 
-    localStorage.setItem('acceptedTos', 'true'); 
-    tosWrapper.style.display = 'none'; 
-  });
+  tosButtonsAcceptTos.addEventListener('click', () => { localStorage.setItem('acceptedTos', 'true'); tosWrapper.style.display = 'none'; });
   tosButtonsContainer.appendChild(tosButtonsAcceptTos);
-  
   if (localStorage.getItem('acceptedTos')) tosWrapper.style.display = 'none';
-  
   tosContainer.appendChild(tosLogoContainer);
   tosContainer.appendChild(tosTermsContainer);
   tosContainer.appendChild(tosPatreonContainer);
   tosContainer.appendChild(tosButtonsContainer);
   tosWrapper.appendChild(tosContainer);
-  
   return tosWrapper;
 }
 
-// Variable Setup
 function setVariables() {
   aiName = aiConfig['ai-name'];
   aiPersonality = aiConfig['ai-personality'];
@@ -799,69 +655,45 @@ function setVariables() {
   aiTone = aiConfig['ai tone'];
   memoriesDivContainer = selectById('memories');
   aiConfigFile = aiConfigFilePrefix + aiName;
-  currentConversationID = aiConfig.conversations && aiConfig.conversations[0] ? aiConfig.conversations[0].id : generateGUID();
+  currentConversationID = aiConfig.conversations[0]?.id || generateGUID();
 }
 
-// Event Listener Setup
 function setUpEventListeners() {
   const submitButton = selectById('submit-button');
   submitButton.addEventListener('click', handleSubmitButtonClick);
-  
   const formInputField = selectById('user-input');
-  formInputField.addEventListener('keyup', (event) => { 
-    if (event.key === '0') handleSubmitButtonClick(event); 
-  });
-  
+  formInputField.addEventListener('keyup', (event) => { if (event.key === '0') handleSubmitButtonClick(event); });
   const menuButton = selectById('menuButton');
   menuButton.addEventListener('click', handleMenuButtonClick);
-  
   const clipboardButton = selectById('shortcutClipboardButton');
   clipboardButton.addEventListener('click', handlesShortcutClipboardButtonClick);
-  
   const memoryButton = selectById('shortcutMemoryButton');
   memoryButton.addEventListener('click', handleMemoryCreation);
-  
   const testButton = selectById('shortcutTestButton');
   testButton.addEventListener('click', TestButton);
-  
   const resetButton = selectById('shortcutResetToDefaults');
   resetButton.addEventListener('click', handleResetButtonClick);
-  
   const historyToggleButton = selectById('shortcutHistoryToggle');
   historyToggleButton.addEventListener('click', handleHistoryToggleButton);
-  
   const shortcutCloseToolButton = selectById('shortcutCloseToolButton');
   shortcutCloseToolButton.addEventListener('click', handleShortcutCloseToolButton);
-  
   handlePopoutMenuItemLoading();
-  
   Array.from(document.getElementsByClassName('popoutMenuHotBarItem')).forEach(button => {
     button.addEventListener('touchstart', () => { button.click(); });
     button.addEventListener('touchend', () => { button.click(); button.style.backgroundColor = ''; button.style.color = ''; });
   });
 }
 
-// Initialization on DOM Content Loaded
 document.addEventListener('DOMContentLoaded', () => {
-  console.warn = () => {}; // Suppress console warnings if needed
-  
+  console.warn = () => {};
   window.addEventListener('load', () => {
     setTimeout(() => {
       setUpEventListeners();
-      const factoryResetConfig = { 
-        title: 'How to factory reset the app', 
-        image: '/compassai_old/assets/Reset_to_Defaults.gif', 
-        description: 'To reset the app, follow these steps:\n\n1. Open the menu.\n2. Click the reset icon (which looks like a circular arrow).\n3. A confirmation overlay will show. Click "Yes" to clear the app settings.', 
-        altText: '1. Open the menu.\n2. Click the reset icon (which looks like a circular arrow).\n3. A confirmation overlay will show. Click "Yes" to clear the app settings.' 
-      };
+      const factoryResetConfig = { title: 'How to factory reset the app', image: '/compassai_old/assets/Reset_to_Defaults.gif', description: 'To reset the app, follow these steps:\n\n1. Open the menu.\n2. Click the reset icon (which looks like a circular arrow).\n3. A confirmation overlay will show. Click "Yes" to clear the app settings.', altText: '1. Open the menu.\n2. Click the reset icon (which looks like a circular arrow).\n3. A confirmation overlay will show. Click "Yes" to clear the app settings.' };
       guideShowOverlay(factoryResetConfig, 'main-wrapper');
     }, 100);
   });
-  
-  marked.setOptions({ 
-    highlight: (code, language) => language && hljs.getLanguage(language) ? hljs.highlight(code, { language }).value : hljs.highlightAuto(code).value 
-  });
-  
+  marked.setOptions({ highlight: (code, language) => language && hljs.getLanguage(language) ? hljs.highlight(code, { language }).value : hljs.highlightAuto(code).value });
   selectById('main-wrapper').appendChild(loadTermsOfService());
   loadAIConfig();
 });
