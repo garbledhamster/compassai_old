@@ -208,7 +208,7 @@ async function SummarizeChunksOpenAI(chunksToSummarize) {
 }
 
 async function getConversationHistory(limit = null) {
-  const conversations = getObjectAiConfig('conversations');
+  const conversations = getObjectAiConfig('conversations') || [];
   const conversation = conversations.find(convo => convo.id === currentConversationID);
   if (!conversation) return [];
   let chatHistory = conversation.messages.filter(message => !message.ignore).map(({ role, content }) => ({ role, content }));
@@ -217,7 +217,7 @@ async function getConversationHistory(limit = null) {
 }
 
 function loadConversations() {
-  const conversations = getObjectAiConfig('conversations');
+  const conversations = getObjectAiConfig('conversations') || [];
   const parent = domCache.toolOutputInner;
   while (parent.firstChild) parent.firstChild.remove();
   conversations.forEach(conversationObj => {
@@ -300,6 +300,8 @@ function loadMemories() {
   const memoriesContainer = domCache.memoriesContainer;
   if (memoriesContainer) {
     while (memoriesContainer.firstChild) memoriesContainer.removeChild(memoriesContainer.firstChild);
+    memories.forEach(memory => appendMemoryBubble(memory));
+  } else {
     memories.forEach(memory => appendMemoryBubble(memory));
   }
 }
@@ -394,8 +396,9 @@ async function getImportantMemories(limit = null) {
 async function handleSubmitButtonClick(event) {
   event.preventDefault();
   const [submitButton, userInput, toolOutputInner] = ['submit-button', 'user-input', 'tool-output-inner'].map(selectById);
-  let userInputText = userInput.value;
-  let currentDate = new Date().toLocaleString();
+  let userInputText = userInput.value.trim();
+  if (userInputText === '') return; // Prevent empty submissions
+  const currentDate = new Date().toLocaleString();
   const submitButtonText = submitButton.innerHTML;
   let message = {
     id: generateGUID(),
@@ -407,7 +410,7 @@ async function handleSubmitButtonClick(event) {
   };
   submitButton.disabled = true;
   userInput.disabled = true;
-  submitButton.innerHTML = '<div class="loading-circle"></div>';
+  submitButton.innerHTML = '<div class="loading-circle"></div>'; // You can style this loading indicator in CSS
   await fetchCloudFlareMessage(message);
   userInput.value = '';
   submitButton.innerHTML = submitButtonText;
@@ -423,7 +426,7 @@ async function handleMenuButtonClick() {
   } else {
     menuContainer.style.display = 'none';
   }
-  handleCloseMenuItem();
+  handleCloseMenuItem(); // Ensure this function is defined if used
 }
 
 async function handleHistoryToggleButton() {
@@ -432,16 +435,16 @@ async function handleHistoryToggleButton() {
     chatHistoryToggle = 'aiLastOutput';
   } else if (chatHistoryToggle === 'aiLastOutput') {
     chatHistoryToggle = 'currentInput';
-    toggleButton.innerHTML = '&#x1F4D7;';
+    toggleButton.innerHTML = '&#x1F4D7;'; // Book emoji
   } else {
     chatHistoryToggle = 'infinite';
-    toggleButton.innerHTML = '&#x267E;&#xFE0F;';
+    toggleButton.innerHTML = '&#x267E;&#xFE0F;'; // Infinity emoji
   }
 }
 
 async function handleMemoryCreation(e) {
   e.preventDefault();
-  const selectedText = window.getSelection().toString();
+  const selectedText = window.getSelection().toString().trim();
   if (selectedText.length <= 0) return;
   const memoryButton = e.target;
   memoryButton.disabled = true;
@@ -524,55 +527,30 @@ async function handleGuidesItemClick() {
 }
 
 async function handleMemoriesItemClick() {
-  const menuItemCardContainer = selectById('memoriesContainer');
-  if (menuItemCardContainer.style.display === 'none' || menuItemCardContainer.style.display === '') {
-    domCache.popoutCardContainers.style.display = '';
-    menuItemCardContainer.style.display = '';
-    domCache.popoutMenuItemButtons.style.display = 'none';
-    menuItemCardContainer.classList.add('appear');
-  } else {
-    setTimeout(() => {
-      menuItemCardContainer.style.display = 'none';
-      domCache.popoutCardContainers.style.display = 'none';
-      domCache.popoutMenuItemButtons.style.display = '';
-      menuItemCardContainer.classList.remove('appear');
-    }, 300);
-  }
+  handleGuidesItemClick();
   loadMemories();
 }
 
 async function handleToolsItemClick() {
+  const { popoutCardContainers, popoutMenuItemButtons } = domCache;
   const menuItemCardContainer = selectById('toolsContainer');
   if (menuItemCardContainer.style.display === 'none' || menuItemCardContainer.style.display === '') {
-    domCache.popoutCardContainers.style.display = '';
+    popoutCardContainers.style.display = '';
     menuItemCardContainer.style.display = '';
-    domCache.popoutMenuItemButtons.style.display = 'none';
+    popoutMenuItemButtons.style.display = 'none';
     menuItemCardContainer.classList.add('appear');
   } else {
     setTimeout(() => {
       menuItemCardContainer.style.display = 'none';
-      domCache.popoutCardContainers.style.display = 'none';
-      domCache.popoutMenuItemButtons.style.display = '';
+      popoutCardContainers.style.display = 'none';
+      popoutMenuItemButtons.style.display = '';
       menuItemCardContainer.classList.remove('appear');
     }, 300);
   }
 }
 
 async function handleConversationsItemClick() {
-  const menuItemCardContainer = selectById('conversationsContainer');
-  if (menuItemCardContainer.style.display === 'none' || menuItemCardContainer.style.display === '') {
-    domCache.popoutCardContainers.style.display = '';
-    menuItemCardContainer.style.display = '';
-    domCache.popoutMenuItemButtons.style.display = 'none';
-    menuItemCardContainer.classList.add('appear');
-  } else {
-    setTimeout(() => {
-      menuItemCardContainer.style.display = 'none';
-      domCache.popoutCardContainers.style.display = 'none';
-      domCache.popoutMenuItemButtons.style.display = '';
-      menuItemCardContainer.classList.remove('appear');
-    }, 300);
-  }
+  handleGuidesItemClick();
 }
 
 async function handleSettingsItemClick() {
@@ -594,7 +572,6 @@ async function handleSettingsItemClick() {
   }
 }
 
-// Popout Menu Initialization
 async function handlePopoutMenuItemLoading() {
   selectById('popoutMenuItemCompassGuides').addEventListener('click', handleGuidesItemClick);
   selectById('popoutMenuItemMemories').addEventListener('click', handleMemoriesItemClick);
@@ -866,7 +843,7 @@ function setUpEventListeners() {
 
 // Initialization on DOM Content Loaded
 document.addEventListener('DOMContentLoaded', () => {
-  console.warn = () => {};
+  console.warn = () => {}; // Suppress console warnings if needed
   
   window.addEventListener('load', () => {
     setTimeout(() => {
